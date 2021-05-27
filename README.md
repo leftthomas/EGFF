@@ -1,6 +1,6 @@
 # AutoEdge
 
-A PyTorch implementation of AutoEdge based on SPL paper [Sketch-based Image Retrieval Guided by Auto Edge]().
+A PyTorch implementation of AutoEdge based on SPL paper [Zero-shot Sketch-based Image Retrieval Guided by Auto Edge]().
 
 ![Network Architecture](result/structure.png)
 
