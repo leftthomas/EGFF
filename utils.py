@@ -2,7 +2,7 @@ import glob
 import os
 
 import torch
-from PIL import Image
+from PIL import Image, ImageFilter
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator, precision_at_k
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
@@ -29,11 +29,12 @@ def get_transform(data_name, split='train'):
 
 
 class DomainDataset(Dataset):
-    def __init__(self, data_root, data_name, split='train'):
+    def __init__(self, data_root, data_name, edge_mode, split='train'):
         super(DomainDataset, self).__init__()
 
         self.images = sorted(glob.glob(os.path.join(data_root, data_name, split, '*', '*', '*.jpg')))
         self.transform = get_transform(data_name, split)
+        self.edge_mode = edge_mode
 
         self.domains, self.labels, self.classes = [], [], {}
         i = 0
@@ -51,6 +52,10 @@ class DomainDataset(Dataset):
         label = self.labels[index]
         img = Image.open(img_name)
         img = self.transform(img)
+        if self.edge_mode == 'photo' and domain == 0:
+            img = img.filter(ImageFilter.FIND_EDGES)
+        if self.edge_mode == 'both':
+            img = img.filter(ImageFilter.FIND_EDGES)
         return img, domain, label, img_name
 
     def __len__(self):

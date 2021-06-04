@@ -70,6 +70,8 @@ if __name__ == '__main__':
                         help='Dataset name')
     parser.add_argument('--backbone_type', default='resnet50', type=str, choices=['resnet50', 'vgg16'],
                         help='Backbone type')
+    parser.add_argument('--edge_mode', default='auto', type=str, choices=['auto', 'both', 'photo', 'none'],
+                        help='Edge extraction mode')
     parser.add_argument('--proj_dim', default=512, type=int, help='Projected embedding dim')
     parser.add_argument('--batch_size', default=64, type=int, help='Number of images in each mini-batch')
     parser.add_argument('--epochs', default=100, type=int, help='Number of epochs over the model to train')
@@ -77,12 +79,12 @@ if __name__ == '__main__':
 
     # args parse
     args = parser.parse_args()
-    data_root, data_name, backbone_type = args.data_root, args.data_name, args.backbone_type
+    data_root, data_name, backbone_type, edge_mode = args.data_root, args.data_name, args.backbone_type, args.edge_mode
     proj_dim, batch_size, epochs, save_root = args.proj_dim, args.batch_size, args.epochs, args.save_root
 
     # data prepare
-    train_data = DomainDataset(data_root, data_name, split='train')
-    val_data = DomainDataset(data_root, data_name, split='val')
+    train_data = DomainDataset(data_root, data_name, edge_mode, split='train')
+    val_data = DomainDataset(data_root, data_name, edge_mode, split='val')
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=8)
     val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=8)
 
@@ -94,7 +96,7 @@ if __name__ == '__main__':
 
     # training loop
     results = {'train_loss': [], 'val_precise': [], 'P@100': [], 'P@200': [], 'mAP@200': [], 'mAP@all': []}
-    save_name_pre = '{}_{}_{}'.format(data_name, backbone_type, proj_dim)
+    save_name_pre = '{}_{}_{}_{}'.format(data_name, backbone_type, edge_mode, proj_dim)
     if not os.path.exists(save_root):
         os.makedirs(save_root)
     best_precise = 0.0
