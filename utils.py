@@ -51,15 +51,11 @@ class DomainDataset(Dataset):
         domain = self.domains[index]
         label = self.labels[index]
         img = Image.open(img_name)
-        img.save('result/ori_{}'.format(img_name.replace('/', '_')))
-        img = self.transform(img)
-        img = transforms.ToPILImage()(img)
-        img.save('result/tri_{}'.format(img_name.replace('/', '_')))
         if self.edge_mode == 'photo' and domain == 0:
             img = img.filter(ImageFilter.CONTOUR)
         if self.edge_mode == 'both':
             img = img.filter(ImageFilter.CONTOUR)
-        img.save('result/fil_{}'.format(img_name.replace('/', '_')))
+        img = self.transform(img)
         return img, domain, label, img_name
 
     def __len__(self):

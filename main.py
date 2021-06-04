@@ -89,7 +89,7 @@ if __name__ == '__main__':
     val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=8)
 
     # model and loss setup
-    model = Model(backbone_type, proj_dim).cuda()
+    model = Model(backbone_type, edge_mode, proj_dim).cuda()
     loss_criterion = ProxyAnchorLoss(len(train_data.classes), proj_dim).cuda()
     # optimizer config
     optimizer = Adam(itertools.chain(model.parameters(), loss_criterion.parameters()), lr=1e-3, weight_decay=1e-6)

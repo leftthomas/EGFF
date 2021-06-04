@@ -25,6 +25,12 @@ pip install pytorch-metric-learning
 conda install -c pytorch faiss-gpu
 ```
 
+- [Kornia](https://kornia.readthedocs.io)
+
+```
+pip install kornia
+```
+
 ## Dataset
 
 [Sketchy Extended](http://sketchy.eye.gatech.edu) and
