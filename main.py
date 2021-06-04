@@ -56,7 +56,7 @@ def val(net, data_loader):
         results['P@200'].append(acc['P@200'] * 100)
         results['mAP@200'].append(acc['mAP@200'] * 100)
         results['mAP@all'].append(acc['mAP@all'] * 100)
-        print('Val Epoch: [{}/{}] | P@100:{:.2f}% | P@200:{:.2f}% | mAP@200:{:.2f}% | mAP@all:{:.2f}%'
+        print('Val Epoch: [{}/{}] | P@100:{:.1f}% | P@200:{:.1f}% | mAP@200:{:.1f}% | mAP@all:{:.1f}%'
               .format(epoch, epochs, acc['P@100'] * 100, acc['P@200'] * 100, acc['mAP@200'] * 100,
                       acc['mAP@all'] * 100))
     return acc['precise'], vectors

@@ -94,53 +94,53 @@ and `weight decay` is `1e-6`. all the hyper-parameters are the default values.
   <tr>
     <td align="center">VGG16</td>
     <td align="center">512</td>
-    <td align="center">29.33</td>
-    <td align="center">33.33</td>
-    <td align="center">45.33</td>
-    <td align="center">58.67</td>
-    <td align="center">29.33</td>
-    <td align="center">33.33</td>
-    <td align="center">45.33</td>
-    <td align="center">58.67</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.6</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.7</td>
     <td align="center"><a href="https://pan.baidu.com/s/1yZhkba1EU79LwqgizDzTUA">agdw</a></td>
   </tr>
   <tr>
     <td align="center">VGG16</td>
     <td align="center">2048</td>
-    <td align="center">29.33</td>
-    <td align="center">33.33</td>
-    <td align="center">45.33</td>
-    <td align="center">58.67</td>
-    <td align="center">29.33</td>
-    <td align="center">33.33</td>
-    <td align="center">45.33</td>
-    <td align="center">58.67</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.6</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.7</td>
     <td align="center"><a href="https://pan.baidu.com/s/1yZhkba1EU79LwqgizDzTUA">agdw</a></td>
   </tr>
   <tr>
     <td align="center">ResNet50</td>
     <td align="center">512</td>
-    <td align="center"><b>69.33</b></td>
-    <td align="center"><b>73.33</b></td>
-    <td align="center"><b>81.33</b></td>
-    <td align="center"><b>88.00</b></td>
-    <td align="center"><b>69.33</b></td>
-    <td align="center"><b>73.33</b></td>
-    <td align="center"><b>81.33</b></td>
-    <td align="center"><b>88.00</b></td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.6</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.7</td>
     <td align="center"><a href="https://pan.baidu.com/s/139IHtS2_tOZcEK2Qgt-yQw">5dzs</a></td>
   </tr>
   <tr>
     <td align="center">ResNet50</td>
     <td align="center">2048</td>
-    <td align="center"><b>69.33</b></td>
-    <td align="center"><b>73.33</b></td>
-    <td align="center"><b>81.33</b></td>
-    <td align="center"><b>88.00</b></td>
-    <td align="center"><b>69.33</b></td>
-    <td align="center"><b>73.33</b></td>
-    <td align="center"><b>81.33</b></td>
-    <td align="center"><b>88.00</b></td>
+    <td align="center"><b>69.3</b></td>
+    <td align="center"><b>73.3</b></td>
+    <td align="center"><b>81.3</b></td>
+    <td align="center"><b>88.0</b></td>
+    <td align="center"><b>69.3</b></td>
+    <td align="center"><b>73.3</b></td>
+    <td align="center"><b>81.3</b></td>
+    <td align="center"><b>88.0</b></td>
     <td align="center"><a href="https://pan.baidu.com/s/139IHtS2_tOZcEK2Qgt-yQw">5dzs</a></td>
   </tr>
 </tbody>
