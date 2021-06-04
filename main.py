@@ -1,18 +1,22 @@
 import argparse
+import itertools
 import os
+import random
 
 import numpy as np
 import pandas as pd
 import torch
+from pytorch_metric_learning.losses import ProxyAnchorLoss
 from torch.backends import cudnn
 from torch.optim import Adam
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 
 from model import Model
-from utils import DomainDataset, recall
+from utils import DomainDataset, compute_metric
 
 # for reproducibility
+random.seed(1)
 np.random.seed(1)
 torch.manual_seed(1)
 cudnn.deterministic = True
@@ -23,20 +27,15 @@ cudnn.benchmark = False
 def train(net, data_loader, train_optimizer):
     net.train()
     total_loss, total_num, train_bar = 0.0, 0, tqdm(data_loader, dynamic_ncols=True)
-    for img_1, img_2, img_3 in train_bar:
-        _, proj_1 = net(img_1.cuda())
-        _, proj_2 = net(img_2.cuda())
-        if method_name == 'simclr':
-            loss = loss_criterion(proj_1, proj_2)
-        else:
-            _, proj_3 = net(img_3.cuda())
-            loss = loss_criterion(proj_1, proj_2, proj_3)
+    for img, domain, label, img_name in train_bar:
+        proj = net(img.cuda())
+        loss = loss_criterion(proj, label.cuda())
         train_optimizer.zero_grad()
         loss.backward()
         train_optimizer.step()
 
-        total_num += img_1.size(0)
-        total_loss += loss.item() * img_1.size(0)
+        total_num += img.size(0)
+        total_loss += loss.item() * img.size(0)
         train_bar.set_description('Train Epoch: [{}/{}] Loss: {:.4f}'.format(epoch, epochs, total_loss / total_num))
 
     return total_loss / total_num
@@ -47,23 +46,20 @@ def val(net, data_loader):
     net.eval()
     vectors = []
     with torch.no_grad():
-        for data, _, _ in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
-            vectors.append(net(data.cuda())[0])
+        for img, domain, label, img_name in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
+            vectors.append(net(img.cuda()))
         vectors = torch.cat(vectors, dim=0)
-        labels = data_loader.dataset.labels
         domains = data_loader.dataset.domains
-        acc_a, acc_b, acc = recall(vectors, labels, domains, ranks)
-        precise = (acc_a[0] + acc_b[0] + acc[0]) / 3
-        desc = 'Val Epoch: [{}/{}] '.format(epoch, epochs)
-        for i, r in enumerate(ranks):
-            results['val_ab_recall@{}'.format(r)].append(acc_a[i] * 100)
-            results['val_ba_recall@{}'.format(r)].append(acc_b[i] * 100)
-            results['val_cross_recall@{}'.format(r)].append(acc[i] * 100)
-        desc += '| (A->B) R@{}:{:.2f}% | '.format(ranks[0], acc_a[0] * 100)
-        desc += '(B->A) R@{}:{:.2f}% | '.format(ranks[0], acc_b[0] * 100)
-        desc += '(A<->B) R@{}:{:.2f}% | '.format(ranks[0], acc[0] * 100)
-        print(desc)
-    return precise, vectors
+        labels = data_loader.dataset.labels
+        acc = compute_metric(vectors, domains, labels)
+        results['P@100'].append(acc['P@100'] * 100)
+        results['P@200'].append(acc['P@200'] * 100)
+        results['mAP@200'].append(acc['mAP@200'] * 100)
+        results['mAP@all'].append(acc['mAP@all'] * 100)
+        print('Val Epoch: [{}/{}] | P@100:{:.2f}% | P@200:{:.2f}% | mAP@200:{:.2f}% | mAP@all:{:.2f}%'
+              .format(epoch, epochs, acc['P@100'] * 100, acc['P@200'] * 100, acc['mAP@200'] * 100,
+                      acc['mAP@all'] * 100))
+    return acc['precise'], vectors
 
 
 if __name__ == '__main__':
@@ -72,40 +68,33 @@ if __name__ == '__main__':
     parser.add_argument('--data_root', default='data', type=str, help='Datasets root path')
     parser.add_argument('--data_name', default='sketchy', type=str, choices=['sketchy', 'tuberlin'],
                         help='Dataset name')
-    parser.add_argument('--method_name', default='gbd', type=str, choices=['gbd', 'simclr'], help='Method name')
-    parser.add_argument('--proj_dim', default=128, type=int, help='Projected feature dim for computing loss')
-    parser.add_argument('--temperature', default=0.1, type=float, help='Temperature used in softmax')
-    parser.add_argument('--batch_size', default=32, type=int, help='Number of images in each mini-batch')
-    parser.add_argument('--iters', default=10000, type=int, help='Number of bp over the model to train')
+    parser.add_argument('--backbone_type', default='resnet50', type=str, choices=['resnet50', 'vgg16'],
+                        help='Backbone type')
+    parser.add_argument('--proj_dim', default=512, type=int, help='Projected embedding dim')
+    parser.add_argument('--batch_size', default=64, type=int, help='Number of images in each mini-batch')
+    parser.add_argument('--epochs', default=100, type=int, help='Number of epochs over the model to train')
     parser.add_argument('--save_root', default='result', type=str, help='Result saved root path')
 
     # args parse
     args = parser.parse_args()
-    data_root, data_name, method_name = args.data_root, args.data_name, args.method_name
-    proj_dim, temperature, batch_size, iters = args.proj_dim, args.temperature, args.batch_size, args.iters
-    save_root = args.save_root
+    data_root, data_name, backbone_type = args.data_root, args.data_name, args.backbone_type
+    proj_dim, batch_size, epochs, save_root = args.proj_dim, args.batch_size, args.epochs, args.save_root
 
     # data prepare
-    train_data = DomainDataset(data_root, data_name, method_name, split='train')
-    val_data = DomainDataset(data_root, data_name, method_name, split='val')
+    train_data = DomainDataset(data_root, data_name, split='train')
+    val_data = DomainDataset(data_root, data_name, split='val')
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=8)
     val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=8)
-    # compute the epochs over the dataset
-    epochs = iters // (len(train_data) // batch_size + 1)
 
-    # model setup
-    model = Model(proj_dim).cuda()
+    # model and loss setup
+    model = Model(backbone_type, proj_dim).cuda()
+    loss_criterion = ProxyAnchorLoss(len(train_data.classes), proj_dim).cuda()
     # optimizer config
-    optimizer = Adam(model.parameters(), lr=1e-4, betas=(0.5, 0.99))
-    loss_criterion = SimCLRLoss(temperature)
+    optimizer = Adam(itertools.chain(model.parameters(), loss_criterion.parameters()), lr=1e-3, weight_decay=1e-6)
 
     # training loop
-    results = {'train_loss': [], 'val_precise': []}
-    for rank in ranks:
-        results['val_ab_recall@{}'.format(rank)] = []
-        results['val_ba_recall@{}'.format(rank)] = []
-        results['val_cross_recall@{}'.format(rank)] = []
-    save_name_pre = '{}_{}'.format(data_name, method_name)
+    results = {'train_loss': [], 'val_precise': [], 'P@100': [], 'P@200': [], 'mAP@200': [], 'mAP@all': []}
+    save_name_pre = '{}_{}_{}'.format(data_name, backbone_type, proj_dim)
     if not os.path.exists(save_root):
         os.makedirs(save_root)
     best_precise = 0.0
