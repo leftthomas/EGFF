@@ -3,17 +3,18 @@ import os
 
 import torch
 from PIL import Image
+from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator, precision_at_k
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
 
-normalizer = {'sketchy': [(0.717, 0.705, 0.678), (0.204, 0.202, 0.202)],
-              'tuberlin': [(0.496, 0.527, 0.548), (0.222, 0.218, 0.220)]}
+normalizer = {'sketchy': [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)],
+              'tuberlin': [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)]}
 
 
 def get_transform(data_name, split='train'):
     if split == 'train':
         return transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
+            transforms.RandomResizedCrop(224),
             transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
             transforms.RandomGrayscale(p=0.2),
             transforms.RandomHorizontalFlip(p=0.5),
@@ -21,17 +22,17 @@ def get_transform(data_name, split='train'):
             transforms.Normalize(normalizer[data_name][0], normalizer[data_name][1])])
     else:
         return transforms.Compose([
-            transforms.Resize(224),
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
             transforms.ToTensor(),
             transforms.Normalize(normalizer[data_name][0], normalizer[data_name][1])])
 
 
 class DomainDataset(Dataset):
-    def __init__(self, data_root, data_name, method_name, split='train'):
+    def __init__(self, data_root, data_name, split='train'):
         super(DomainDataset, self).__init__()
 
-        self.method_name = method_name
-        self.images = sorted(glob.glob(os.path.join(data_root, data_name, 'original', split, '*', '*', '*.jpg')))
+        self.images = sorted(glob.glob(os.path.join(data_root, data_name, split, '*', '*', '*.jpg')))
         self.transform = get_transform(data_name, split)
 
         self.labels, self.domains, self.classes = [], [], {}
@@ -49,35 +50,40 @@ class DomainDataset(Dataset):
         domain = self.domains[index]
         label = self.labels[index]
         img = Image.open(img_name)
-        img_1 = self.transform(img)
-        if self.method_name != 'gbd':
-            img_2 = self.transform(img)
-        else:
-            img_2 = self.transform(Image.open(img_name.replace('original', 'generated')))
-        return img_1, img_2, domain, label, img_name
+        img = self.transform(img)
+        return img, domain, label, img_name
 
     def __len__(self):
         return len(self.images)
 
 
-def recall(vectors, labels, domains, ranks):
-    domains = torch.as_tensor(domains, dtype=torch.bool, device=vectors.device)
-    labels = torch.as_tensor(labels, dtype=torch.long, device=vectors.device)
-    a_vectors = vectors[~domains]
-    b_vectors = vectors[domains]
-    a_labels = labels[~domains]
-    b_labels = labels[domains]
-    # domain a ---> domain b
-    sim_a = a_vectors.mm(b_vectors.t())
-    idx_a = sim_a.topk(k=ranks[-1], dim=-1, largest=True)[1]
-    # domain b ---> domain a
-    sim_b = b_vectors.mm(a_vectors.t())
-    idx_b = sim_b.topk(k=ranks[-1], dim=-1, largest=True)[1]
+class MetricCalculator(AccuracyCalculator):
+    def calculate_precision_at_100(self, knn_labels, query_labels, **kwargs):
+        return precision_at_k(knn_labels, query_labels[:, None], 100, self.avg_of_avgs, self.label_comparison_fn)
 
-    acc_a, acc_b = [], []
-    for r in ranks:
-        correct_a = (torch.eq(b_labels[idx_a[:, 0:r]], a_labels.unsqueeze(dim=-1))).any(dim=-1)
-        acc_a.append((torch.sum(correct_a) / correct_a.size(0)).item())
-        correct_b = (torch.eq(a_labels[idx_b[:, 0:r]], b_labels.unsqueeze(dim=-1))).any(dim=-1)
-        acc_b.append((torch.sum(correct_b) / correct_b.size(0)).item())
-    return acc_a, acc_b
+    def calculate_precision_at_200(self, knn_labels, query_labels, **kwargs):
+        return precision_at_k(knn_labels, query_labels[:, None], 200, self.avg_of_avgs, self.label_comparison_fn)
+
+    def requires_knn(self):
+        return super().requires_knn() + ["precision_at_100", "precision_at_200"]
+
+
+def compute_metric(vectors, categories, labels):
+    calculator_200 = MetricCalculator(include=['mean_average_precision', 'precision_at_100', 'precision_at_200'], k=200)
+    calculator_all = MetricCalculator(include=['mean_average_precision'])
+    acc = {}
+
+    photo_vectors = vectors[torch.as_tensor(categories) == 0]
+    sketch_vectors = vectors[torch.as_tensor(categories) == 1]
+    photo_labels = torch.as_tensor(labels, device=vectors.device)[torch.as_tensor(categories) == 0]
+    sketch_labels = torch.as_tensor(labels, device=vectors.device)[torch.as_tensor(categories) == 1]
+    map_200 = calculator_200.get_accuracy(sketch_vectors, photo_vectors, sketch_labels, photo_labels, False)
+    map_all = calculator_all.get_accuracy(sketch_vectors, photo_vectors, sketch_labels, photo_labels, False)
+
+    acc['P@100'] = map_200['precision_at_100']
+    acc['P@200'] = map_200['precision_at_200']
+    acc['mAP@200'] = map_200['mean_average_precision']
+    acc['mAP@all'] = map_all['mean_average_precision']
+    # the mean value is chosen as the representative of precise
+    acc['val_precise'] = (acc['P@100'] + acc['P@200'] + acc['mAP@200'] + acc['mAP@all']) / 4
+    return acc

@@ -10,14 +10,26 @@ A PyTorch implementation of AutoEdge based on SPL paper [Zero-shot Sketch-based 
 - [PyTorch](https://pytorch.org)
 
 ```
-conda install pytorch=1.8.1 torchvision torchaudio cudatoolkit -c pytorch
+conda install pytorch=1.8.1 torchvision cudatoolkit -c pytorch
+```
+
+- [Pytorch Metric Learning](https://kevinmusgrave.github.io/pytorch-metric-learning/)
+
+```
+pip install pytorch-metric-learning
+```
+
+- [Faiss](https://faiss.ai)
+
+```
+conda install -c pytorch faiss-gpu
 ```
 
 ## Dataset
 
-[Sketchy Extended](http://sketchy.eye.gatech.edu) and 
-[TU Berlin](http://cybertron.cg.tu-berlin.de/eitz/projects/classifysketch/) datasets are used in this repo, you could 
-download these datasets from official websites, or download them from 
+[Sketchy Extended](http://sketchy.eye.gatech.edu) and
+[TU Berlin](http://cybertron.cg.tu-berlin.de/eitz/projects/classifysketch/) datasets are used in this repo, you could
+download these datasets from official websites, or download them from
 [MEGA](https://mega.nz/folder/IooQkZRJ#jLYcZ5PFK9jzxLN4FuOopg). The data directory structure is shown as follows:
 
  ```
@@ -44,11 +56,12 @@ download these datasets from official websites, or download them from
 python main.py --data_name tuberlin
 optional arguments:
 --data_root                   Datasets root path [default value is 'data']
---data_name                   Dataset name [default value is 'cufsf'](choices=['sketchy', 'tuberlin'])
---proj_dim                    Projected feature dim for computing loss [default value is 128]
+--data_name                   Dataset name [default value is 'sketchy'](choices=['sketchy', 'tuberlin'])
+--backbone_type               Backbone type [default value is 'resnet50'](choices=['resnet50', 'vgg16'])
+--proj_dim                    Projected Embedding dim [default value is 512]
 --temperature                 Temperature used in softmax [default value is 0.1]
---batch_size                  Number of images in each mini-batch [default value is 32]
---iters                       Number of bp over the model to train [default value is 10000]
+--batch_size                  Number of images in each mini-batch [default value is 64]
+--epochs                      Number of epochs over the model to train [default value is 100]
 --save_root                   Result saved root path [default value is 'result']
 ```
 
@@ -90,6 +103,32 @@ and `weight decay` is `1e-6`. all the hyper-parameters are the default values.
     <td align="center">45.33</td>
     <td align="center">58.67</td>
     <td align="center"><a href="https://pan.baidu.com/s/1yZhkba1EU79LwqgizDzTUA">agdw</a></td>
+  </tr>
+  <tr>
+    <td align="center">VGG16</td>
+    <td align="center">2048</td>
+    <td align="center">29.33</td>
+    <td align="center">33.33</td>
+    <td align="center">45.33</td>
+    <td align="center">58.67</td>
+    <td align="center">29.33</td>
+    <td align="center">33.33</td>
+    <td align="center">45.33</td>
+    <td align="center">58.67</td>
+    <td align="center"><a href="https://pan.baidu.com/s/1yZhkba1EU79LwqgizDzTUA">agdw</a></td>
+  </tr>
+  <tr>
+    <td align="center">ResNet50</td>
+    <td align="center">512</td>
+    <td align="center"><b>69.33</b></td>
+    <td align="center"><b>73.33</b></td>
+    <td align="center"><b>81.33</b></td>
+    <td align="center"><b>88.00</b></td>
+    <td align="center"><b>69.33</b></td>
+    <td align="center"><b>73.33</b></td>
+    <td align="center"><b>81.33</b></td>
+    <td align="center"><b>88.00</b></td>
+    <td align="center"><a href="https://pan.baidu.com/s/139IHtS2_tOZcEK2Qgt-yQw">5dzs</a></td>
   </tr>
   <tr>
     <td align="center">ResNet50</td>

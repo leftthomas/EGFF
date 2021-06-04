@@ -9,7 +9,7 @@ from torch.optim import Adam
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 
-from model import Model, SimCLRLoss
+from model import Model
 from utils import DomainDataset, recall
 
 # for reproducibility
