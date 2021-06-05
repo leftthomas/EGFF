@@ -67,7 +67,7 @@ optional arguments:
 --edge_mode                   Edge extraction mode [default value is 'auto'](choices=['auto', 'both', 'photo', 'none'])
 --proj_dim                    Projected embedding dim [default value is 512]
 --batch_size                  Number of images in each mini-batch [default value is 64]
---epochs                      Number of epochs over the model to train [default value is 100]
+--epochs                      Number of epochs over the model to train [default value is 50]
 --save_root                   Result saved root path [default value is 'result']
 ```
 
