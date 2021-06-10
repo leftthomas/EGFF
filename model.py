@@ -20,9 +20,7 @@ class Model(nn.Module):
         else:
             raise NotImplementedError('Not support {} as backbone'.format(backbone_type))
         # head
-        in_channel = 2048 if backbone_type == 'resnet50' else 512
-        self.g = nn.Sequential(nn.Linear(in_channel, 512, bias=False), nn.BatchNorm1d(512),
-                               nn.ReLU(inplace=True), nn.Linear(512, proj_dim, bias=True))
+        self.g = nn.Linear(2048 if backbone_type == 'resnet50' else 512, proj_dim)
         self.edge_mode = edge_mode
         if edge_mode == 'auto':
             self.t = nn.Sequential(nn.Conv2d(6, 3, 3, padding=1, bias=False), nn.BatchNorm2d(3), nn.ReLU(inplace=True))

@@ -6,6 +6,7 @@ from PIL import Image, ImageFilter
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator, precision_at_k
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
+from torchvision.transforms import InterpolationMode
 
 normalizer = {'sketchy': [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)],
               'tuberlin': [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)]}
@@ -14,15 +15,12 @@ normalizer = {'sketchy': [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)],
 def get_transform(data_name, split='train'):
     if split == 'train':
         return transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
-            transforms.RandomGrayscale(p=0.2),
-            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
             transforms.ToTensor(),
             transforms.Normalize(normalizer[data_name][0], normalizer[data_name][1])])
     else:
         return transforms.Compose([
-            transforms.Resize(256),
+            transforms.Resize(256, interpolation=InterpolationMode.BICUBIC),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             transforms.Normalize(normalizer[data_name][0], normalizer[data_name][1])])
