@@ -8,22 +8,20 @@ from torch.utils.data.dataset import Dataset
 from torchvision import transforms
 from torchvision.transforms import InterpolationMode
 
-normalizer = {'sketchy': [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)],
-              'tuberlin': [(0.485, 0.456, 0.406), (0.229, 0.224, 0.225)]}
 
-
-def get_transform(data_name, split='train'):
+def get_transform(split='train'):
     if split == 'train':
         return transforms.Compose([
-            transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
+            transforms.RandomResizedCrop(224, scale=(0.2, 1.14), interpolation=InterpolationMode.BICUBIC),
+            transforms.RandomHorizontalFlip(p=0.5),
             transforms.ToTensor(),
-            transforms.Normalize(normalizer[data_name][0], normalizer[data_name][1])])
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
     else:
         return transforms.Compose([
             transforms.Resize(256, interpolation=InterpolationMode.BICUBIC),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
-            transforms.Normalize(normalizer[data_name][0], normalizer[data_name][1])])
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
 
 
 class DomainDataset(Dataset):
@@ -31,7 +29,7 @@ class DomainDataset(Dataset):
         super(DomainDataset, self).__init__()
 
         self.images = sorted(glob.glob(os.path.join(data_root, data_name, split, '*', '*', '*.jpg')))
-        self.transform = get_transform(data_name, split)
+        self.transform = get_transform(split)
         self.edge_mode = edge_mode
 
         self.domains, self.labels, self.classes = [], [], {}
