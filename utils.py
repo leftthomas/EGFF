@@ -49,21 +49,16 @@ class DomainDataset(Dataset):
         label = self.labels[index]
         img = Image.open(img_name)
         # img.save('result/{}'.format(img_name.replace('/', '_')))
-        if self.edge_mode == 'photo' and domain == 0:
-            img = sobel(transforms.ToTensor()(img).unsqueeze(dim=0), normalized=False).squeeze(dim=0)
-            img -= img.min()
-            img /= img.max()
-            img = 1.0 - img
-            img = transforms.ToPILImage()(img)
-            # img.save('result/edge-{}'.format(img_name.replace('/', '_')))
-        if self.edge_mode == 'both':
-            img = sobel(transforms.ToTensor()(img).unsqueeze(dim=0), normalized=False).squeeze(dim=0)
-            img -= img.min()
-            img /= img.max()
-            img = 1.0 - img
-            img = transforms.ToPILImage()(img)
-            # img.save('result/edge-{}'.format(img_name.replace('/', '_')))
         img = self.transform(img)
+        if (self.edge_mode == 'photo' and domain == 0) or self.edge_mode == 'both':
+            img = sobel(img.unsqueeze(dim=0), normalized=False).squeeze(dim=0)
+            img -= img.min()
+            img /= img.max()
+            img = 1.0 - img
+            # img[img < 0.7] = 0.0
+            # img[img >= 0.7] = 1.0
+            # img = transforms.ToPILImage()(img.mean(dim=0))
+            # img.save('result/edge-{}'.format(img_name.replace('/', '_')))
         return img, domain, label, img_name
 
     def __len__(self):
