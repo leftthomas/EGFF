@@ -10,7 +10,7 @@ A PyTorch implementation of AutoEdge based on SPL paper [Zero-shot Sketch-based 
 - [PyTorch](https://pytorch.org)
 
 ```
-conda install pytorch=1.8.1 torchvision cudatoolkit -c pytorch
+conda install pytorch=1.9.0 torchvision cudatoolkit -c pytorch
 ```
 
 - [Pytorch Metric Learning](https://kevinmusgrave.github.io/pytorch-metric-learning/)
@@ -22,7 +22,7 @@ pip install pytorch-metric-learning
 - [Faiss](https://faiss.ai)
 
 ```
-conda install -c pytorch faiss-gpu
+conda install -c pytorch faiss-cpu
 ```
 
 - [Kornia](https://kornia.readthedocs.io)
@@ -73,8 +73,8 @@ optional arguments:
 
 ## Benchmarks
 
-The models are trained on one NVIDIA GTX TITAN (12G) GPU. `Adam` is used to optimize the model, `lr` is `1e-3`
-and `weight decay` is `1e-6`. all the hyper-parameters are the default values.
+The models are trained on one NVIDIA GTX TITAN (12G) GPU. `Adam` is used to optimize the model, `lr` is `1e-4`
+and `weight decay` is `1e-5`. all the hyper-parameters are the default values.
 
 <table>
 <thead>

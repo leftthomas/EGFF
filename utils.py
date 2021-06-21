@@ -12,7 +12,7 @@ from torchvision.transforms import InterpolationMode
 def get_transform(split='train'):
     if split == 'train':
         return transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=(0.2, 1.14), interpolation=InterpolationMode.BICUBIC),
+            transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.ToTensor(),
             transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])

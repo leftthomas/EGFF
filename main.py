@@ -92,7 +92,7 @@ if __name__ == '__main__':
     model = Model(backbone_type, edge_mode, proj_dim).cuda()
     loss_criterion = ProxyAnchorLoss(len(train_data.classes), proj_dim).cuda()
     # optimizer config
-    optimizer = Adam(itertools.chain(model.parameters(), loss_criterion.parameters()), lr=1e-3, weight_decay=1e-6)
+    optimizer = Adam(itertools.chain(model.parameters(), loss_criterion.parameters()), lr=1e-4, weight_decay=1e-5)
 
     # training loop
     results = {'train_loss': [], 'val_precise': [], 'P@100': [], 'P@200': [], 'mAP@200': [], 'mAP@all': []}
