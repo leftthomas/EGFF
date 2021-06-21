@@ -53,8 +53,8 @@ class DomainDataset(Dataset):
         if (self.edge_mode == 'photo' and domain == 0) or self.edge_mode == 'both':
             img = sobel(img.unsqueeze(dim=0), normalized=False).squeeze(dim=0)
             img -= img.min()
-            img /= img.max()
-            img = 1.0 - img
+            img /= (img.max() + 1e-6)
+            img = (1.0 - img)
             # img[img < 0.7] = 0.0
             # img[img >= 0.7] = 1.0
             # img = transforms.ToPILImage()(img.mean(dim=0))
