@@ -70,7 +70,7 @@ if __name__ == '__main__':
                         help='Dataset name')
     parser.add_argument('--backbone_type', default='resnet50', type=str, choices=['resnet50', 'vgg16'],
                         help='Backbone type')
-    parser.add_argument('--edge_mode', default='auto', type=str, choices=['auto', 'both', 'photo', 'none'],
+    parser.add_argument('--edge_mode', default='both', type=str, choices=['both', 'photo', 'none'],
                         help='Edge extraction mode')
     parser.add_argument('--proj_dim', default=512, type=int, help='Projected embedding dim')
     parser.add_argument('--batch_size', default=64, type=int, help='Number of images in each mini-batch')

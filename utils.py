@@ -3,7 +3,6 @@ import os
 
 import torch
 from PIL import Image
-from kornia.filters import sobel
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator, precision_at_k
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
@@ -48,17 +47,7 @@ class DomainDataset(Dataset):
         domain = self.domains[index]
         label = self.labels[index]
         img = Image.open(img_name)
-        # img.save('result/{}'.format(img_name.replace('/', '_')))
         img = self.transform(img)
-        if (self.edge_mode == 'photo' and domain == 0) or self.edge_mode == 'both':
-            img = sobel(img.unsqueeze(dim=0), normalized=False).squeeze(dim=0)
-            img -= img.min()
-            img /= (img.max() + 1e-6)
-            img = (1.0 - img)
-            # img[img < 0.7] = 0.0
-            # img[img >= 0.7] = 1.0
-            # img = transforms.ToPILImage()(img.mean(dim=0))
-            # img.save('result/edge-{}'.format(img_name.replace('/', '_')))
         return img, domain, label, img_name
 
     def __len__(self):
