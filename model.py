@@ -5,16 +5,6 @@ from kornia.filters import sobel
 from torchvision.models import resnet50, vgg16
 
 
-class GeM(nn.Module):
-    def __init__(self, p=3, eps=1e-6):
-        super(GeM, self).__init__()
-        self.p = nn.Parameter(torch.ones(1) * p)
-        self.eps = eps
-
-    def forward(self, x):
-        return F.avg_pool2d(x.clamp(min=self.eps).pow(self.p), (x.size(-2), x.size(-1))).pow(1.0 / self.p)
-
-
 class SEBlock(nn.Module):
     def __init__(self, channel, reduction=16):
         super(SEBlock, self).__init__()
@@ -23,8 +13,7 @@ class SEBlock(nn.Module):
             nn.Linear(channel, channel // reduction, bias=False),
             nn.ReLU(inplace=True),
             nn.Linear(channel // reduction, channel, bias=False),
-            nn.Sigmoid()
-        )
+            nn.Sigmoid())
 
     def forward(self, x):
         b, c, _, _ = x.size()
@@ -81,7 +70,7 @@ class Model(nn.Module):
         self.g = nn.Linear(256 + 512 + 2048 if backbone_type == 'resnet50' else 256 + 512 + 512, proj_dim)
         self.backbone_type = backbone_type
         self.edge_mode = edge_mode
-        self.pool = GeM()
+        self.pool = nn.AdaptiveMaxPool2d(1)
         self.atten_1 = AttentionBlock(256, 512, 256, 4)
         self.atten_2 = AttentionBlock(512, 512, 512, 2)
 
