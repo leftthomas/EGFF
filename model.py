@@ -66,13 +66,13 @@ class Model(nn.Module):
         else:
             raise NotImplementedError('Not support {} as backbone'.format(backbone_type))
         # head
-        self.g = nn.Linear(512 + 1024 + 2048 if backbone_type == 'resnet50' else 256 + 512 + 512, proj_dim)
+        self.g = nn.Linear(256 + 512 + 2048 if backbone_type == 'resnet50' else 256 + 512 + 512, proj_dim)
         self.backbone_type = backbone_type
         self.edge_mode = edge_mode
         self.pool = nn.AdaptiveMaxPool2d(1)
         if self.backbone_type == 'resnet50':
-            self.atten_1 = AttentionBlock(512, 2048, 512, 4)
-            self.atten_2 = AttentionBlock(1024, 2048, 1024, 2)
+            self.atten_1 = AttentionBlock(256, 2048, 256, 8)
+            self.atten_2 = AttentionBlock(512, 2048, 512, 4)
         else:
             self.atten_1 = AttentionBlock(256, 512, 256, 4)
             self.atten_2 = AttentionBlock(512, 512, 512, 2)
@@ -82,9 +82,9 @@ class Model(nn.Module):
             x = sobel(x)
 
         if self.backbone_type == 'resnet50':
-            x1 = self.f[:6](x)
-            x2 = self.f[6:7](x1)
-            x3 = self.f[7:8](x2)
+            x1 = self.f[:5](x)
+            x2 = self.f[5:6](x1)
+            x3 = self.f[6:8](x2)
         else:
             x1 = self.f[:16](x)
             x2 = self.f[16:23](x1)
