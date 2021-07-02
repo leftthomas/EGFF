@@ -23,22 +23,21 @@ class SEBlock(nn.Module):
 
 
 class AttentionBlock(nn.Module):
-    def __init__(self, in_features_l, in_features_g, attn_features, up_factor, use_se=True):
+    def __init__(self, in_features_l, in_features_g, attn_features, up_factor):
         super(AttentionBlock, self).__init__()
         self.up_factor = up_factor
-        self.use_se = use_se
         self.W_l = nn.Conv2d(in_channels=in_features_l, out_channels=attn_features, kernel_size=1, padding=0,
                              bias=False)
         self.W_g = nn.Conv2d(in_channels=in_features_g, out_channels=attn_features, kernel_size=1, padding=0,
                              bias=False)
         self.phi = nn.Conv2d(in_channels=attn_features, out_channels=1, kernel_size=1, padding=0, bias=True)
-        if use_se:
-            self.channel_gate = SEBlock(in_features_l)
+        self.channel_gate = SEBlock(in_features_l)
 
     def forward(self, l, g):
+        # l = sobel(l)
         B, C, H, W = l.size()
-        if self.use_se:
-            l = self.channel_gate(l)
+
+        l = self.channel_gate(l)
         l_ = self.W_l(l)
 
         g_ = self.W_g(g)
