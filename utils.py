@@ -1,7 +1,7 @@
 import glob
 import os
+import random
 
-import torch
 from PIL import Image
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator, precision_at_k
 from torch.utils.data.dataset import Dataset
@@ -25,18 +25,18 @@ def get_transform(split='train'):
 
 
 class DomainDataset(Dataset):
-    def __init__(self, data_root, data_name, edge_mode, split='train'):
+    def __init__(self, data_root, data_name, split='train'):
         super(DomainDataset, self).__init__()
 
-        self.images = sorted(glob.glob(os.path.join(data_root, data_name, split, '*', '*', '*.jpg')))
+        dirname = 'sketch' if split == 'train' else '*'
+        self.images = sorted(glob.glob(os.path.join(data_root, data_name, split, dirname, '*', '*.jpg')))
         self.transform = get_transform(split)
-        self.edge_mode = edge_mode
+        self.split = split
 
-        self.domains, self.labels, self.classes = [], [], {}
+        self.labels, self.classes = [], {}
         i = 0
         for img in self.images:
-            domain, label = os.path.dirname(img).split('/')[-2:]
-            self.domains.append(0 if domain == 'photo' else 1)
+            label = os.path.dirname(img).split('/')[-1]
             if label not in self.classes:
                 self.classes[label] = i
                 i += 1
@@ -44,11 +44,23 @@ class DomainDataset(Dataset):
 
     def __getitem__(self, index):
         img_name = self.images[index]
-        domain = self.domains[index]
         label = self.labels[index]
         img = Image.open(img_name)
         img = self.transform(img)
-        return img, domain, label, img_name
+        if self.split == 'train':
+            dirname = os.path.dirname(img_name).split('/')
+            dirname[-2] = 'photo'
+            head = ''
+            for path in dirname:
+                head = os.path.join(head, path)
+            photos = sorted(glob.glob(os.path.join(head, '*.jpg')))
+            photo_name = random.choice(photos)
+            photo = Image.open(photo_name)
+            photo = self.transform(photo)
+            return img, photo, label
+        else:
+            domain = 0 if os.path.dirname(img_name).split('/')[-2] == 'photo' else 1
+            return img, domain, label
 
     def __len__(self):
         return len(self.images)
@@ -70,10 +82,10 @@ def compute_metric(vectors, domains, labels):
     calculator_all = MetricCalculator(include=['mean_average_precision'])
     acc = {}
 
-    photo_vectors = vectors[torch.as_tensor(domains) == 0]
-    sketch_vectors = vectors[torch.as_tensor(domains) == 1]
-    photo_labels = torch.as_tensor(labels, device=vectors.device)[torch.as_tensor(domains) == 0]
-    sketch_labels = torch.as_tensor(labels, device=vectors.device)[torch.as_tensor(domains) == 1]
+    photo_vectors = vectors[domains == 0]
+    sketch_vectors = vectors[domains == 1]
+    photo_labels = labels[domains == 0]
+    sketch_labels = labels[domains == 1]
     map_200 = calculator_200.get_accuracy(sketch_vectors, photo_vectors, sketch_labels, photo_labels, False)
     map_all = calculator_all.get_accuracy(sketch_vectors, photo_vectors, sketch_labels, photo_labels, False)
 

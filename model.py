@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from kornia.filters import sobel
 from torchvision.models import resnet50, vgg16
 
 
@@ -34,7 +33,6 @@ class AttentionBlock(nn.Module):
         self.channel_gate = SEBlock(in_features_l)
 
     def forward(self, l, g):
-        # l = sobel(l)
         B, C, H, W = l.size()
 
         l = self.channel_gate(l)
@@ -52,7 +50,7 @@ class AttentionBlock(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, backbone_type, edge_mode, proj_dim):
+    def __init__(self, backbone_type, proj_dim):
         super(Model, self).__init__()
         # encoder
         if backbone_type == 'resnet50':
@@ -68,7 +66,6 @@ class Model(nn.Module):
         # head
         self.g = nn.Linear(256 + 512 + 2048 if backbone_type == 'resnet50' else 256 + 512 + 512, proj_dim)
         self.backbone_type = backbone_type
-        self.edge_mode = edge_mode
         self.pool = nn.AdaptiveMaxPool2d(1)
         if self.backbone_type == 'resnet50':
             self.atten_1 = AttentionBlock(256, 2048, 256, 8)
@@ -78,9 +75,6 @@ class Model(nn.Module):
             self.atten_2 = AttentionBlock(512, 512, 512, 2)
 
     def forward(self, x):
-        if self.edge_mode != 'none':
-            x = sobel(x)
-
         if self.backbone_type == 'resnet50':
             x1 = self.f[:5](x)
             x2 = self.f[5:6](x1)
@@ -95,3 +89,26 @@ class Model(nn.Module):
         feat = torch.cat([g_fec, g1, g2], dim=1)
         proj = self.g(feat)
         return F.normalize(proj, dim=-1)
+
+
+class SimCLRLoss(nn.Module):
+    def __init__(self, temperature=0.1):
+        super(SimCLRLoss, self).__init__()
+        self.temperature = temperature
+
+    def forward(self, proj_1, proj_2):
+        batch_size = proj_1.size(0)
+        # [2*B, Dim]
+        out = torch.cat([proj_1, proj_2], dim=0)
+        # [2*B, 2*B]
+        sim_matrix = torch.exp(torch.mm(out, out.t().contiguous()) / self.temperature)
+        mask = (torch.ones_like(sim_matrix) - torch.eye(2 * batch_size, device=sim_matrix.device)).bool()
+        # [2*B, 2*B-1]
+        sim_matrix = sim_matrix.masked_select(mask).view(2 * batch_size, -1)
+
+        # compute loss
+        pos_sim = torch.exp(torch.sum(proj_1 * proj_2, dim=-1) / self.temperature)
+        # [2*B]
+        pos_sim = torch.cat([pos_sim, pos_sim], dim=0)
+        loss = (- torch.log(pos_sim / sim_matrix.sum(dim=-1))).mean()
+        return loss
