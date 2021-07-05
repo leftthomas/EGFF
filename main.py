@@ -26,21 +26,17 @@ cudnn.benchmark = False
 def train(net, data_loader, train_optimizer):
     net.train()
     total_loss, total_num, train_bar = 0.0, 0, tqdm(data_loader, dynamic_ncols=True)
-    for sketch, photo, label in train_bar:
-        if edge_mode == 'both':
-            sketch = sobel(sketch)
-            photo = sobel(photo)
-        elif edge_mode == 'photo':
-            photo = sobel(photo)
-        s_proj = net(sketch.cuda())
+    for photo, sketch, label in train_bar:
         p_proj = net(photo.cuda())
-        loss = loss_criterion(s_proj, p_proj)
+        s_proj = net(sketch.cuda())
+        e_proj = net(sobel(photo).cuda())
+        loss = loss_criterion(p_proj, s_proj) + loss_criterion(p_proj, e_proj)
         train_optimizer.zero_grad()
         loss.backward()
         train_optimizer.step()
 
-        total_num += sketch.size(0)
-        total_loss += loss.item() * sketch.size(0)
+        total_num += photo.size(0)
+        total_loss += loss.item() * photo.size(0)
         train_bar.set_description('Train Epoch: [{}/{}] Loss: {:.4f}'.format(epoch, epochs, total_loss / total_num))
 
     return total_loss / total_num
@@ -52,16 +48,6 @@ def val(net, data_loader):
     vectors, domains, labels = [], [], []
     with torch.no_grad():
         for img, domain, label in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
-            if edge_mode == 'both':
-                img = sobel(img)
-            elif edge_mode == 'photo':
-                images = []
-                for image, dom in zip(img, domain):
-                    if dom == 0:
-                        images.append(sobel(image.unsqueeze(dim=0)))
-                    else:
-                        images.append(image.unsqueeze(dim=0))
-                img = torch.cat(images, dim=0)
             vectors.append(net(img.cuda()))
             domains.append(domain.cuda())
             labels.append(label.cuda())
@@ -87,8 +73,6 @@ if __name__ == '__main__':
                         help='Dataset name')
     parser.add_argument('--backbone_type', default='resnet50', type=str, choices=['resnet50', 'vgg16'],
                         help='Backbone type')
-    parser.add_argument('--edge_mode', default='both', type=str, choices=['both', 'photo', 'none'],
-                        help='Edge extraction mode')
     parser.add_argument('--proj_dim', default=512, type=int, help='Projected embedding dim')
     parser.add_argument('--batch_size', default=32, type=int, help='Number of images in each mini-batch')
     parser.add_argument('--epochs', default=50, type=int, help='Number of epochs over the model to train')
@@ -96,7 +80,7 @@ if __name__ == '__main__':
 
     # args parse
     args = parser.parse_args()
-    data_root, data_name, backbone_type, edge_mode = args.data_root, args.data_name, args.backbone_type, args.edge_mode
+    data_root, data_name, backbone_type = args.data_root, args.data_name, args.backbone_type
     proj_dim, batch_size, epochs, save_root = args.proj_dim, args.batch_size, args.epochs, args.save_root
 
     # data prepare
@@ -113,7 +97,7 @@ if __name__ == '__main__':
 
     # training loop
     results = {'train_loss': [], 'val_precise': [], 'P@100': [], 'P@200': [], 'mAP@200': [], 'mAP@all': []}
-    save_name_pre = '{}_{}_{}_{}'.format(data_name, backbone_type, edge_mode, proj_dim)
+    save_name_pre = '{}_{}_{}'.format(data_name, backbone_type, proj_dim)
     if not os.path.exists(save_root):
         os.makedirs(save_root)
     best_precise = 0.0

@@ -28,7 +28,7 @@ class DomainDataset(Dataset):
     def __init__(self, data_root, data_name, split='train'):
         super(DomainDataset, self).__init__()
 
-        dirname = 'sketch' if split == 'train' else '*'
+        dirname = 'photo' if split == 'train' else '*'
         self.images = sorted(glob.glob(os.path.join(data_root, data_name, split, dirname, '*', '*.jpg')))
         self.transform = get_transform(split)
         self.split = split
@@ -48,18 +48,13 @@ class DomainDataset(Dataset):
         img = Image.open(img_name)
         img = self.transform(img)
         if self.split == 'train':
-            dirname = os.path.dirname(img_name).split('/')
-            dirname[-2] = 'photo'
-            head = ''
-            for path in dirname:
-                head = os.path.join(head, path)
-            photos = sorted(glob.glob(os.path.join(head, '*.jpg')))
-            photo_name = random.choice(photos)
-            photo = Image.open(photo_name)
-            photo = self.transform(photo)
-            return img, photo, label
+            sketches = sorted(glob.glob(os.path.join(os.path.dirname(img_name).replace('photo', 'sketch'), '*.jpg')))
+            sketch_name = random.choice(sketches)
+            sketch = Image.open(sketch_name)
+            sketch = self.transform(sketch)
+            return img, sketch, label
         else:
-            domain = 0 if os.path.dirname(img_name).split('/')[-2] == 'photo' else 1
+            domain = 0 if 'photo' in img_name else 1
             return img, domain, label
 
     def __len__(self):
