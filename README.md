@@ -73,8 +73,8 @@ optional arguments:
 
 ## Benchmarks
 
-The models are trained on one NVIDIA GTX TITAN (12G) GPU. `Adam` is used to optimize the model, `lr` is `1e-4`
-and `weight decay` is `1e-5`. all the hyper-parameters are the default values.
+The models are trained on one NVIDIA GTX TITAN (12G) GPU. `Adam` is used to optimize the model, `lr` is `1e-5`
+and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
 
 <table>
 <thead>

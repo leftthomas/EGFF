@@ -1,17 +1,18 @@
 import argparse
+import itertools
 import os
 import random
 
 import numpy as np
 import pandas as pd
 import torch
-from kornia.filters import sobel
+from pytorch_metric_learning.losses import ProxyAnchorLoss
 from torch.backends import cudnn
 from torch.optim import Adam
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 
-from model import Model, SimCLRLoss
+from model import Model
 from utils import DomainDataset, compute_metric
 
 # for reproducibility
@@ -26,17 +27,14 @@ cudnn.benchmark = False
 def train(net, data_loader, train_optimizer):
     net.train()
     total_loss, total_num, train_bar = 0.0, 0, tqdm(data_loader, dynamic_ncols=True)
-    for photo, sketch, label in train_bar:
-        p_proj = net(photo.cuda())
-        s_proj = net(sketch.cuda())
-        e_proj = net(sobel(photo).cuda())
-        loss = loss_criterion(p_proj, s_proj) + loss_criterion(p_proj, e_proj)
+    for img, domain, label, img_name in train_bar:
+        proj = net(img.cuda(), domain.cuda())
+        loss = loss_criterion(proj, label.cuda())
         train_optimizer.zero_grad()
         loss.backward()
         train_optimizer.step()
-
-        total_num += photo.size(0)
-        total_loss += loss.item() * photo.size(0)
+        total_num += img.size(0)
+        total_loss += loss.item() * img.size(0)
         train_bar.set_description('Train Epoch: [{}/{}] Loss: {:.4f}'.format(epoch, epochs, total_loss / total_num))
 
     return total_loss / total_num
@@ -47,8 +45,8 @@ def val(net, data_loader):
     net.eval()
     vectors, domains, labels = [], [], []
     with torch.no_grad():
-        for img, domain, label in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
-            vectors.append(net(img.cuda()))
+        for img, domain, label, img_name in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
+            vectors.append(net(img.cuda(), domain.cuda()))
             domains.append(domain.cuda())
             labels.append(label.cuda())
         vectors = torch.cat(vectors, dim=0)
@@ -74,7 +72,7 @@ if __name__ == '__main__':
     parser.add_argument('--backbone_type', default='resnet50', type=str, choices=['resnet50', 'vgg16'],
                         help='Backbone type')
     parser.add_argument('--proj_dim', default=512, type=int, help='Projected embedding dim')
-    parser.add_argument('--batch_size', default=32, type=int, help='Number of images in each mini-batch')
+    parser.add_argument('--batch_size', default=64, type=int, help='Number of images in each mini-batch')
     parser.add_argument('--epochs', default=50, type=int, help='Number of epochs over the model to train')
     parser.add_argument('--save_root', default='result', type=str, help='Result saved root path')
 
@@ -86,14 +84,14 @@ if __name__ == '__main__':
     # data prepare
     train_data = DomainDataset(data_root, data_name, split='train')
     val_data = DomainDataset(data_root, data_name, split='val')
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=8, drop_last=True)
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=8)
     val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=8)
 
     # model and loss setup
     model = Model(backbone_type, proj_dim).cuda()
-    loss_criterion = SimCLRLoss()
+    loss_criterion = ProxyAnchorLoss(len(train_data.classes), proj_dim).cuda()
     # optimizer config
-    optimizer = Adam(model.parameters(), lr=1e-5, weight_decay=5e-4)
+    optimizer = Adam(itertools.chain(model.parameters(), loss_criterion.parameters()), lr=1e-5, weight_decay=5e-4)
 
     # training loop
     results = {'train_loss': [], 'val_precise': [], 'P@100': [], 'P@200': [], 'mAP@200': [], 'mAP@all': []}

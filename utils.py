@@ -1,6 +1,5 @@
 import glob
 import os
-import random
 
 from PIL import Image
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator, precision_at_k
@@ -28,15 +27,14 @@ class DomainDataset(Dataset):
     def __init__(self, data_root, data_name, split='train'):
         super(DomainDataset, self).__init__()
 
-        dirname = 'photo' if split == 'train' else '*'
-        self.images = sorted(glob.glob(os.path.join(data_root, data_name, split, dirname, '*', '*.jpg')))
+        self.images = sorted(glob.glob(os.path.join(data_root, data_name, split, '*', '*', '*.jpg')))
         self.transform = get_transform(split)
-        self.split = split
 
-        self.labels, self.classes = [], {}
+        self.domains, self.labels, self.classes = [], [], {}
         i = 0
         for img in self.images:
-            label = os.path.dirname(img).split('/')[-1]
+            domain, label = os.path.dirname(img).split('/')[-2:]
+            self.domains.append(0 if domain == 'photo' else 1)
             if label not in self.classes:
                 self.classes[label] = i
                 i += 1
@@ -44,18 +42,11 @@ class DomainDataset(Dataset):
 
     def __getitem__(self, index):
         img_name = self.images[index]
+        domain = self.domains[index]
         label = self.labels[index]
         img = Image.open(img_name)
         img = self.transform(img)
-        if self.split == 'train':
-            sketches = sorted(glob.glob(os.path.join(os.path.dirname(img_name).replace('photo', 'sketch'), '*.jpg')))
-            sketch_name = random.choice(sketches)
-            sketch = Image.open(sketch_name)
-            sketch = self.transform(sketch)
-            return img, sketch, label
-        else:
-            domain = 0 if 'photo' in img_name else 1
-            return img, domain, label
+        return img, domain, label, img_name
 
     def __len__(self):
         return len(self.images)
