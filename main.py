@@ -1,14 +1,13 @@
 import argparse
-import itertools
 import os
 import random
 
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_metric_learning.losses import ProxyAnchorLoss
+from pytorch_metric_learning.losses import NormalizedSoftmaxLoss
 from torch.backends import cudnn
-from torch.optim import Adam
+from torch.optim import AdamW
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 
@@ -29,6 +28,8 @@ def train(net, data_loader, train_optimizer):
     total_loss, total_num, train_bar = 0.0, 0, tqdm(data_loader, dynamic_ncols=True)
     for img, domain, label, img_name in train_bar:
         proj = net(img.cuda(), domain.cuda())
+        if torch.any(domain.bool()) and torch.any(~domain.bool()):
+            label = torch.cat((label[domain.bool()], label[~domain.bool()]), dim=0)
         loss = loss_criterion(proj, label.cuda())
         train_optimizer.zero_grad()
         loss.backward()
@@ -47,8 +48,12 @@ def val(net, data_loader):
     with torch.no_grad():
         for img, domain, label, img_name in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
             vectors.append(net(img.cuda(), domain.cuda()))
-            domains.append(domain.cuda())
-            labels.append(label.cuda())
+            if torch.any(domain.bool()) and torch.any(~domain.bool()):
+                domains.append(torch.cat((domain[domain.bool()], domain[~domain.bool()]), dim=0).cuda())
+                labels.append(torch.cat((label[domain.bool()], label[~domain.bool()]), dim=0).cuda())
+            else:
+                domains.append(domain.cuda())
+                labels.append(label.cuda())
         vectors = torch.cat(vectors, dim=0)
         domains = torch.cat(domains, dim=0)
         labels = torch.cat(labels, dim=0)
@@ -73,13 +78,14 @@ if __name__ == '__main__':
                         help='Backbone type')
     parser.add_argument('--proj_dim', default=512, type=int, help='Projected embedding dim')
     parser.add_argument('--batch_size', default=64, type=int, help='Number of images in each mini-batch')
-    parser.add_argument('--epochs', default=50, type=int, help='Number of epochs over the model to train')
+    parser.add_argument('--epochs', default=20, type=int, help='Number of epochs over the model to train')
+    parser.add_argument('--warmup', default=2, type=int, help='Number of warmups over the model to train')
     parser.add_argument('--save_root', default='result', type=str, help='Result saved root path')
 
     # args parse
     args = parser.parse_args()
-    data_root, data_name, backbone_type = args.data_root, args.data_name, args.backbone_type
-    proj_dim, batch_size, epochs, save_root = args.proj_dim, args.batch_size, args.epochs, args.save_root
+    data_root, data_name, backbone_type, proj_dim = args.data_root, args.data_name, args.backbone_type, args.proj_dim
+    batch_size, epochs, warmup, save_root = args.batch_size, args.epochs, args.warmup, args.save_root
 
     # data prepare
     train_data = DomainDataset(data_root, data_name, split='train')
@@ -89,10 +95,10 @@ if __name__ == '__main__':
 
     # model and loss setup
     model = Model(backbone_type, proj_dim).cuda()
-    loss_criterion = ProxyAnchorLoss(len(train_data.classes), proj_dim).cuda()
+    loss_criterion = NormalizedSoftmaxLoss(len(train_data.classes), proj_dim).cuda()
     # optimizer config
-    optimizer = Adam(itertools.chain(model.parameters(), loss_criterion.parameters()), lr=1e-5, weight_decay=5e-4)
-
+    optimizer = AdamW([{'params': model.parameters()}, {'params': loss_criterion.parameters(), 'lr': 1e-1}],
+                      lr=1e-5, weight_decay=5e-4)
     # training loop
     results = {'train_loss': [], 'val_precise': [], 'P@100': [], 'P@200': [], 'mAP@200': [], 'mAP@all': []}
     save_name_pre = '{}_{}_{}'.format(data_name, backbone_type, proj_dim)
@@ -100,6 +106,15 @@ if __name__ == '__main__':
         os.makedirs(save_root)
     best_precise = 0.0
     for epoch in range(1, epochs + 1):
+
+        # warmup, not update the parameters of backbone
+        for param in model.sketch_att.parameters():
+            param.requires_grad = False if epoch <= warmup else True
+        for param in model.photo_att.parameters():
+            param.requires_grad = False if epoch <= warmup else True
+        for param in model.common.parameters():
+            param.requires_grad = False if epoch <= warmup else True
+
         train_loss = train(model, train_loader, optimizer)
         results['train_loss'].append(train_loss)
         val_precise, features = val(model, val_loader)

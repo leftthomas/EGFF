@@ -16,14 +16,14 @@ class Model(nn.Module):
                 if not isinstance(module, (nn.Linear, nn.AdaptiveAvgPool2d)):
                     backbone.append(module)
             backbone = nn.Sequential(*backbone)
-            self.common = backbone[:5]
-            self.sketch_att = backbone[5:]
-            self.photo_att = copy.deepcopy(backbone[5:])
+            self.sketch_att = backbone[:5]
+            self.photo_att = copy.deepcopy(backbone[:5])
+            self.common = backbone[5:]
         elif backbone_type == 'vgg16':
             backbone = vgg16(pretrained=True).features
-            self.common = backbone[:16]
-            self.sketch_att = backbone[16:-1]
-            self.photo_att = copy.deepcopy(backbone[16:-1])
+            self.sketch_att = backbone[:16]
+            self.photo_att = copy.deepcopy(backbone[:16])
+            self.common = backbone[16:-1]
         else:
             raise NotImplementedError('Not support {} as backbone'.format(backbone_type))
         # proj
@@ -32,10 +32,19 @@ class Model(nn.Module):
         self.backbone_type = backbone_type
 
     def forward(self, img, domain):
-        x = self.common(img)
-        sketch_feat = self.sketch_att(x)
-        photo_feat = self.photo_att(x)
-        x = torch.where(domain.view(domain.size(0), 1, 1, 1) == 0, photo_feat, sketch_feat)
+        if torch.any(domain.bool()):
+            sketch_feat = self.sketch_att(img[domain.bool()])
+        if torch.any(~domain.bool()):
+            photo_feat = self.photo_att(img[~domain.bool()])
+
+        if not torch.any(domain.bool()):
+            x = photo_feat
+        if not torch.any(~domain.bool()):
+            x = sketch_feat
+        if torch.any(domain.bool()) and torch.any(~domain.bool()):
+            x = torch.cat((sketch_feat, photo_feat), dim=0)
+
+        x = self.common(x)
         feat = torch.flatten(F.adaptive_max_pool2d(x, (1, 1)), start_dim=1)
         proj = self.proj(feat)
         return F.normalize(proj, dim=-1)

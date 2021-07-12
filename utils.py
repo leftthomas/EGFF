@@ -27,7 +27,17 @@ class DomainDataset(Dataset):
     def __init__(self, data_root, data_name, split='train'):
         super(DomainDataset, self).__init__()
 
-        self.images = sorted(glob.glob(os.path.join(data_root, data_name, split, '*', '*', '*.jpg')))
+        images = []
+        for classes in os.listdir(os.path.join(data_root, data_name, split, 'sketch')):
+            sketches = glob.glob(os.path.join(data_root, data_name, split, 'sketch', str(classes), '*.jpg'))
+            photos = glob.glob(os.path.join(data_root, data_name, split, 'photo', str(classes), '*.jpg'))
+            # only consider the classes which photo images >= 400 for tuberlin dataset
+            if len(photos) < 400 and data_name == 'tuberlin' and split == 'val':
+                pass
+            else:
+                images += sketches
+                images += photos
+        self.images = sorted(images)
         self.transform = get_transform(split)
 
         self.domains, self.labels, self.classes = [], [], {}
