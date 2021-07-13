@@ -78,7 +78,7 @@ if __name__ == '__main__':
                         help='Backbone type')
     parser.add_argument('--proj_dim', default=512, type=int, help='Projected embedding dim')
     parser.add_argument('--batch_size', default=64, type=int, help='Number of images in each mini-batch')
-    parser.add_argument('--epochs', default=20, type=int, help='Number of epochs over the model to train')
+    parser.add_argument('--epochs', default=10, type=int, help='Number of epochs over the model to train')
     parser.add_argument('--warmup', default=2, type=int, help='Number of warmups over the model to train')
     parser.add_argument('--save_root', default='result', type=str, help='Result saved root path')
 
