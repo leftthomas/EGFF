@@ -47,13 +47,13 @@ def val(net, data_loader):
     vectors, domains, labels = [], [], []
     with torch.no_grad():
         for img, domain, label, img_name in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
-            vectors.append(net(img.cuda(), domain.cuda()))
+            vectors.append(net(img.cuda(), domain.cuda()).cpu())
             if torch.any(domain.bool()) and torch.any(~domain.bool()):
-                domains.append(torch.cat((domain[domain.bool()], domain[~domain.bool()]), dim=0).cuda())
-                labels.append(torch.cat((label[domain.bool()], label[~domain.bool()]), dim=0).cuda())
+                domains.append(torch.cat((domain[domain.bool()], domain[~domain.bool()]), dim=0))
+                labels.append(torch.cat((label[domain.bool()], label[~domain.bool()]), dim=0))
             else:
-                domains.append(domain.cuda())
-                labels.append(label.cuda())
+                domains.append(domain)
+                labels.append(label)
         vectors = torch.cat(vectors, dim=0)
         domains = torch.cat(domains, dim=0)
         labels = torch.cat(labels, dim=0)
