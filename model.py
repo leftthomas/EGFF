@@ -32,42 +32,54 @@ class Model(nn.Module):
                 if not isinstance(module, (nn.Linear, nn.AdaptiveAvgPool2d)):
                     backbone.append(module)
             backbone = nn.Sequential(*backbone)
-            self.sketch_att = backbone[:5]
-            self.photo_att = copy.deepcopy(backbone[:5])
+            self.sketch_feat = backbone[:5]
+            self.photo_feat = copy.deepcopy(backbone[:5])
             self.common = backbone[5:]
         elif backbone_type == 'vgg16':
             backbone = vgg16(pretrained=True).features
-            self.sketch_att = backbone[:16]
-            self.photo_att = copy.deepcopy(backbone[:16])
+            self.sketch_feat = backbone[:16]
+            self.photo_feat = copy.deepcopy(backbone[:16])
             self.common = backbone[16:-1]
         else:
             raise NotImplementedError('Not support {} as backbone'.format(backbone_type))
         # atte and proj
-        self.sketch_atte = GateAttention(256, 2048 if backbone_type == 'resnet50' else 512)
-        self.photo_atte = GateAttention(256, 2048 if backbone_type == 'resnet50' else 512)
-        self.proj = nn.Linear(256 + 2048 if backbone_type == 'resnet50' else 256 + 512, proj_dim)
+        self.sketch_low_atte = GateAttention(256, 2048 if backbone_type == 'resnet50' else 512)
+        self.photo_low_atte = GateAttention(256, 2048 if backbone_type == 'resnet50' else 512)
+        self.sketch_middle_atte = GateAttention(512, 2048 if backbone_type == 'resnet50' else 512)
+        self.photo_middle_atte = GateAttention(512, 2048 if backbone_type == 'resnet50' else 512)
+        self.proj = nn.Linear(256 + 512 + 2048 if backbone_type == 'resnet50' else 256 + 512 + 512, proj_dim)
+        self.backbone_type = backbone_type
 
     def forward(self, img, domain):
         if torch.any(domain.bool()):
-            sketch_feat = self.sketch_att(img[domain.bool()])
-            sketch_g_feat = self.common(sketch_feat)
-            sketch_atte_map, sketch_att_feat = self.sketch_atte(sketch_feat, sketch_g_feat)
+            sketch_low_feat = self.sketch_feat(img[domain.bool()])
+            sketch_middle_feat = self.common[:1 if self.backbone_type == 'resnet50' else 7](sketch_low_feat)
+            sketch_high_feat = self.common[1 if self.backbone_type == 'resnet50' else 7:](sketch_middle_feat)
+            sketch_att_low_map, sketch_att_low_feat = self.sketch_low_atte(sketch_low_feat, sketch_high_feat)
+            sketch_att_middle_map, sketch_att_middle_feat = self.sketch_middle_atte(sketch_middle_feat,
+                                                                                    sketch_high_feat)
         if torch.any(~domain.bool()):
-            photo_feat = self.photo_att(img[~domain.bool()])
-            photo_g_feat = self.common(photo_feat)
-            photo_atte_map, photo_att_feat = self.photo_atte(photo_feat, photo_g_feat)
+            photo_low_feat = self.photo_feat(img[~domain.bool()])
+            photo_middle_feat = self.common[:1 if self.backbone_type == 'resnet50' else 7](photo_low_feat)
+            photo_high_feat = self.common[1 if self.backbone_type == 'resnet50' else 7:](photo_middle_feat)
+            photo_att_low_map, photo_att_low_feat = self.photo_low_atte(photo_low_feat, photo_high_feat)
+            photo_att_middle_map, photo_att_middle_feat = self.photo_middle_atte(photo_middle_feat, photo_high_feat)
 
         if not torch.any(domain.bool()):
-            g_feat = photo_g_feat
-            att_feat = photo_att_feat
+            high_feat = photo_high_feat
+            att_low_feat = photo_att_low_feat
+            att_middle_feat = photo_att_middle_feat
         if not torch.any(~domain.bool()):
-            g_feat = sketch_g_feat
-            att_feat = sketch_att_feat
+            high_feat = sketch_high_feat
+            att_low_feat = sketch_att_low_feat
+            att_middle_feat = sketch_att_middle_feat
         if torch.any(domain.bool()) and torch.any(~domain.bool()):
-            g_feat = torch.cat((sketch_g_feat, photo_g_feat), dim=0)
-            att_feat = torch.cat((sketch_att_feat, photo_att_feat), dim=0)
+            high_feat = torch.cat((sketch_high_feat, photo_high_feat), dim=0)
+            att_low_feat = torch.cat((sketch_att_low_feat, photo_att_low_feat), dim=0)
+            att_middle_feat = torch.cat((sketch_att_middle_feat, photo_att_middle_feat), dim=0)
 
-        feat = torch.flatten(F.adaptive_max_pool2d(g_feat, (1, 1)), start_dim=1)
-        atte = torch.flatten(F.adaptive_max_pool2d(att_feat, (1, 1)), start_dim=1)
-        proj = self.proj(torch.cat((feat, atte), dim=1))
+        feat = torch.flatten(F.adaptive_max_pool2d(high_feat, (1, 1)), start_dim=1)
+        low_att = torch.flatten(F.adaptive_max_pool2d(att_low_feat, (1, 1)), start_dim=1)
+        middle_att = torch.flatten(F.adaptive_max_pool2d(att_middle_feat, (1, 1)), start_dim=1)
+        proj = self.proj(torch.cat((feat, low_att, middle_att), dim=1))
         return F.normalize(proj, dim=-1)

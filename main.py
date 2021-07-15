@@ -108,9 +108,9 @@ if __name__ == '__main__':
     for epoch in range(1, epochs + 1):
 
         # warmup, not update the parameters of backbone
-        for param in model.sketch_att.parameters():
+        for param in model.sketch_feat.parameters():
             param.requires_grad = False if epoch <= warmup else True
-        for param in model.photo_att.parameters():
+        for param in model.photo_feat.parameters():
             param.requires_grad = False if epoch <= warmup else True
         for param in model.common.parameters():
             param.requires_grad = False if epoch <= warmup else True
