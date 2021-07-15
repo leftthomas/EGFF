@@ -43,43 +43,32 @@ class Model(nn.Module):
         else:
             raise NotImplementedError('Not support {} as backbone'.format(backbone_type))
         # atte and proj
-        self.sketch_low_atte = GateAttention(256, 2048 if backbone_type == 'resnet50' else 512)
-        self.photo_low_atte = GateAttention(256, 2048 if backbone_type == 'resnet50' else 512)
-        self.sketch_middle_atte = GateAttention(512, 2048 if backbone_type == 'resnet50' else 512)
-        self.photo_middle_atte = GateAttention(512, 2048 if backbone_type == 'resnet50' else 512)
+        self.low_atte = GateAttention(256, 2048 if backbone_type == 'resnet50' else 512)
+        self.middle_atte = GateAttention(512, 2048 if backbone_type == 'resnet50' else 512)
         self.proj = nn.Linear(256 + 512 + 2048 if backbone_type == 'resnet50' else 256 + 512 + 512, proj_dim)
         self.backbone_type = backbone_type
 
     def forward(self, img, domain):
         if torch.any(domain.bool()):
             sketch_low_feat = self.sketch_feat(img[domain.bool()])
-            sketch_middle_feat = self.common[:1 if self.backbone_type == 'resnet50' else 7](sketch_low_feat)
-            sketch_high_feat = self.common[1 if self.backbone_type == 'resnet50' else 7:](sketch_middle_feat)
-            sketch_att_low_map, sketch_att_low_feat = self.sketch_low_atte(sketch_low_feat, sketch_high_feat)
-            sketch_att_middle_map, sketch_att_middle_feat = self.sketch_middle_atte(sketch_middle_feat,
-                                                                                    sketch_high_feat)
         if torch.any(~domain.bool()):
             photo_low_feat = self.photo_feat(img[~domain.bool()])
-            photo_middle_feat = self.common[:1 if self.backbone_type == 'resnet50' else 7](photo_low_feat)
-            photo_high_feat = self.common[1 if self.backbone_type == 'resnet50' else 7:](photo_middle_feat)
-            photo_att_low_map, photo_att_low_feat = self.photo_low_atte(photo_low_feat, photo_high_feat)
-            photo_att_middle_map, photo_att_middle_feat = self.photo_middle_atte(photo_middle_feat, photo_high_feat)
 
         if not torch.any(domain.bool()):
-            high_feat = photo_high_feat
-            att_low_feat = photo_att_low_feat
-            att_middle_feat = photo_att_middle_feat
+            low_feat = photo_low_feat
         if not torch.any(~domain.bool()):
-            high_feat = sketch_high_feat
-            att_low_feat = sketch_att_low_feat
-            att_middle_feat = sketch_att_middle_feat
+            low_feat = sketch_low_feat
         if torch.any(domain.bool()) and torch.any(~domain.bool()):
-            high_feat = torch.cat((sketch_high_feat, photo_high_feat), dim=0)
-            att_low_feat = torch.cat((sketch_att_low_feat, photo_att_low_feat), dim=0)
-            att_middle_feat = torch.cat((sketch_att_middle_feat, photo_att_middle_feat), dim=0)
+            low_feat = torch.cat((sketch_low_feat, photo_low_feat), dim=0)
 
-        feat = torch.flatten(F.adaptive_max_pool2d(high_feat, (1, 1)), start_dim=1)
-        low_att = torch.flatten(F.adaptive_max_pool2d(att_low_feat, (1, 1)), start_dim=1)
-        middle_att = torch.flatten(F.adaptive_max_pool2d(att_middle_feat, (1, 1)), start_dim=1)
-        proj = self.proj(torch.cat((feat, low_att, middle_att), dim=1))
+        middle_feat = self.common[:1 if self.backbone_type == 'resnet50' else 7](low_feat)
+        high_feat = self.common[1 if self.backbone_type == 'resnet50' else 7:](middle_feat)
+
+        att_low_map, att_low_feat = self.low_atte(low_feat, high_feat)
+        att_middle_map, att_middle_feat = self.middle_atte(middle_feat, high_feat)
+
+        low_feat = torch.flatten(F.adaptive_max_pool2d(att_low_feat, (1, 1)), start_dim=1)
+        middle_feat = torch.flatten(F.adaptive_max_pool2d(att_middle_feat, (1, 1)), start_dim=1)
+        high_feat = torch.flatten(F.adaptive_max_pool2d(high_feat, (1, 1)), start_dim=1)
+        proj = self.proj(torch.cat((low_feat, middle_feat, high_feat), dim=1))
         return F.normalize(proj, dim=-1)
