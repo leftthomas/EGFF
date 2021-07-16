@@ -1,5 +1,3 @@
-import copy
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -48,13 +46,11 @@ class Model(nn.Module):
                 if not isinstance(module, (nn.Linear, nn.AdaptiveAvgPool2d)):
                     backbone.append(module)
             backbone = nn.Sequential(*backbone)
-            self.sketch_feat = backbone[:5]
-            self.photo_feat = copy.deepcopy(backbone[:5])
+            self.feat = backbone[:5]
             self.common = backbone[5:]
         elif backbone_type == 'vgg16':
             backbone = vgg16(pretrained=True).features
-            self.sketch_feat = backbone[:16]
-            self.photo_feat = copy.deepcopy(backbone[:16])
+            self.feat = backbone[:16]
             self.common = backbone[16:-1]
         else:
             raise NotImplementedError('Not support {} as backbone'.format(backbone_type))
@@ -64,19 +60,8 @@ class Model(nn.Module):
         self.proj = nn.Linear(256 + 512 + 2048 if backbone_type == 'resnet50' else 256 + 512 + 512, proj_dim)
         self.backbone_type = backbone_type
 
-    def forward(self, img, domain):
-        if torch.any(domain.bool()):
-            sketch_low_feat = self.sketch_feat(img[domain.bool()])
-        if torch.any(~domain.bool()):
-            photo_low_feat = self.photo_feat(img[~domain.bool()])
-
-        if not torch.any(domain.bool()):
-            low_feat = photo_low_feat
-        if not torch.any(~domain.bool()):
-            low_feat = sketch_low_feat
-        if torch.any(domain.bool()) and torch.any(~domain.bool()):
-            low_feat = torch.cat((sketch_low_feat, photo_low_feat), dim=0)
-
+    def forward(self, img):
+        low_feat = self.feat(img)
         middle_feat = self.common[:1 if self.backbone_type == 'resnet50' else 7](low_feat)
         high_feat = self.common[1 if self.backbone_type == 'resnet50' else 7:](middle_feat)
 
