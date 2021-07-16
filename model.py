@@ -6,18 +6,34 @@ import torch.nn.functional as F
 from torchvision.models import resnet50, vgg16
 
 
+class SEBlock(nn.Module):
+    def __init__(self, channel, reduction=16):
+        super(SEBlock, self).__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(channel, channel // reduction, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(channel // reduction, channel, bias=False),
+            nn.Sigmoid())
+
+    def forward(self, x):
+        y = torch.flatten(F.adaptive_avg_pool2d(x, (1, 1)), start_dim=1)
+        y = self.fc(y).view(*y.size(), 1, 1)
+        return y * x
+
+
 class GateAttention(nn.Module):
     def __init__(self, low_features, high_features):
         super(GateAttention, self).__init__()
         self.low_conv = nn.Conv2d(low_features, low_features, kernel_size=1, bias=False)
         self.high_conv = nn.Conv2d(high_features, low_features, kernel_size=1, bias=False)
-        self.gate = nn.Conv2d(low_features, 1, kernel_size=1, bias=True)
+        self.channel_gate = SEBlock(low_features)
+        self.feature_gate = nn.Conv2d(low_features, 1, kernel_size=1, bias=True)
 
     def forward(self, low_features, high_features):
-        low_features = self.low_conv(low_features)
+        low_features = self.low_conv(self.channel_gate(low_features))
         high_features = self.high_conv(high_features)
         high_features = F.interpolate(high_features, size=low_features.size()[-2:], mode='bilinear')
-        atte = torch.sigmoid(self.gate(F.relu(low_features + high_features)))
+        atte = torch.sigmoid(self.feature_gate(torch.relu(low_features + high_features)))
         feat = atte * low_features
         return atte, feat
 
