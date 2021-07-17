@@ -30,7 +30,8 @@ class GateAttention(nn.Module):
     def forward(self, low_features, high_features):
         low_features = self.low_conv(low_features)
         high_features = self.high_conv(self.channel_gate(high_features))
-        high_features = F.interpolate(high_features, size=low_features.size()[-2:], mode='bilinear')
+        high_features = F.interpolate(high_features, size=low_features.size()[-2:], mode='bilinear',
+                                      align_corners=False)
         atte = torch.sigmoid(self.feature_gate(torch.relu(low_features + high_features)))
         feat = atte * low_features
         return atte, feat
