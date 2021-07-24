@@ -5,7 +5,7 @@ import random
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_metric_learning.losses import NormalizedSoftmaxLoss
+from pytorch_metric_learning.losses import ProxyAnchorLoss
 from torch.backends import cudnn
 from torch.optim import AdamW
 from torch.utils.data.dataloader import DataLoader
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     # model and loss setup
     model = Model(backbone_type, proj_dim).cuda()
-    loss_criterion = NormalizedSoftmaxLoss(len(train_data.classes), proj_dim).cuda()
+    loss_criterion = ProxyAnchorLoss(len(train_data.classes), proj_dim).cuda()
     # optimizer config
     optimizer = AdamW([{'params': model.parameters()}, {'params': loss_criterion.parameters(), 'lr': 1e-1}],
                       lr=1e-5, weight_decay=5e-4)
@@ -102,9 +102,7 @@ if __name__ == '__main__':
     for epoch in range(1, epochs + 1):
 
         # warmup, not update the parameters of backbone
-        for param in model.feat.parameters():
-            param.requires_grad = False if epoch <= warmup else True
-        for param in model.common.parameters():
+        for param in model.backbone.parameters():
             param.requires_grad = False if epoch <= warmup else True
 
         train_loss = train(model, train_loader, optimizer)
