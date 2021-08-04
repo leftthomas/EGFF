@@ -5,7 +5,7 @@ import random
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_metric_learning.losses import ProxyAnchorLoss
+from pytorch_metric_learning.losses import NormalizedSoftmaxLoss
 from torch.backends import cudnn
 from torch.optim import AdamW
 from torch.utils.data.dataloader import DataLoader
@@ -65,7 +65,7 @@ def val(net, data_loader):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Model')
     # common args
-    parser.add_argument('--data_root', default='data', type=str, help='Datasets root path')
+    parser.add_argument('--data_root', default='/data', type=str, help='Datasets root path')
     parser.add_argument('--data_name', default='sketchy', type=str, choices=['sketchy', 'tuberlin'],
                         help='Dataset name')
     parser.add_argument('--backbone_type', default='resnet50', type=str, choices=['resnet50', 'vgg16'],
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     # model and loss setup
     model = Model(backbone_type, proj_dim).cuda()
-    loss_criterion = ProxyAnchorLoss(len(train_data.classes), proj_dim).cuda()
+    loss_criterion = NormalizedSoftmaxLoss(len(train_data.classes), proj_dim).cuda()
     # optimizer config
     optimizer = AdamW([{'params': model.parameters()}, {'params': loss_criterion.parameters(), 'lr': 1e-1}],
                       lr=1e-5, weight_decay=5e-4)

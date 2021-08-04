@@ -68,7 +68,7 @@ download these datasets from official websites, or download them from
 ```
 python main.py --data_name tuberlin
 optional arguments:
---data_root                   Datasets root path [default value is 'data']
+--data_root                   Datasets root path [default value is '/data']
 --data_name                   Dataset name [default value is 'sketchy'](choices=['sketchy', 'tuberlin'])
 --backbone_type               Backbone type [default value is 'resnet50'](choices=['resnet50', 'vgg16'])
 --proj_dim                    Projected embedding dim [default value is 512]
