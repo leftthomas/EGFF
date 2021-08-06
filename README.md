@@ -26,12 +26,6 @@ pip install pytorch-metric-learning
 conda install -c pytorch faiss-cpu
 ```
 
-- [Kornia](https://kornia.readthedocs.io)
-
-```
-pip install kornia
-```
-
 - [Timm](https://rwightman.github.io/pytorch-image-models/)
 
 ```
