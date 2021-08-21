@@ -18,18 +18,19 @@ class SimAM(nn.Module):
 
 
 class EnergyFFM(nn.Module):
-    def __init__(self, base_dim, atte_dim):
+    def __init__(self, base_dim, reduction=16):
         super(EnergyFFM, self).__init__()
-        self.base_conv = nn.Conv2d(base_dim, base_dim, kernel_size=1, bias=False)
-        self.atte_conv = nn.Conv2d(atte_dim, base_dim, kernel_size=1, bias=False)
+        self.conv = nn.Conv2d(base_dim, base_dim // reduction, kernel_size=1)
+        self.rev = nn.Conv2d(base_dim // reduction + 1, base_dim, kernel_size=1)
         self.gate = SimAM()
 
-    def forward(self, base_feat, atte_feat):
-        base_tra = self.base_conv(base_feat)
-        atte_tra = self.atte_conv(atte_feat)
-        atte_tra = F.interpolate(atte_tra, size=base_tra.size()[-2:], mode='bilinear')
-        atte = self.gate(base_tra + atte_tra)
-        feat = atte * base_feat
+    def forward(self, feat, domain):
+        tra = self.conv(feat)
+        domain = domain.view(-1, 1, 1, 1).float().expand(-1, 1, *tra.size()[-2:])
+        tra = torch.cat((tra, domain), dim=1)
+        rev = self.rev(tra)
+        atte = self.gate(rev)
+        feat = atte * feat
         return atte, feat
 
 
@@ -44,17 +45,17 @@ class Model(nn.Module):
             low_dim, middle_dim, high_dim = 512, 1024, 2048
         else:
             low_dim, middle_dim, high_dim = 256, 512, 512
-        self.low_atte = EnergyFFM(low_dim, high_dim)
-        self.middle_atte = EnergyFFM(middle_dim, high_dim)
-        self.high_atte = EnergyFFM(high_dim, high_dim)
+        self.low_atte = EnergyFFM(low_dim)
+        self.middle_atte = EnergyFFM(middle_dim)
+        self.high_atte = EnergyFFM(high_dim)
         self.proj = nn.Linear(low_dim + middle_dim + high_dim, proj_dim)
         self.backbone_type = backbone_type
 
-    def forward(self, img):
+    def forward(self, img, domain):
         low_feat, middle_feat, high_feat = self.backbone(img)
-        low_atte, low_feat = self.low_atte(low_feat, high_feat)
-        middle_atte, middle_feat = self.middle_atte(middle_feat, high_feat)
-        high_atte, high_feat = self.high_atte(high_feat, high_feat)
+        low_atte, low_feat = self.low_atte(low_feat, domain)
+        middle_atte, middle_feat = self.middle_atte(middle_feat, domain)
+        high_atte, high_feat = self.high_atte(high_feat, domain)
 
         low_feat = torch.flatten(F.adaptive_max_pool2d(low_feat, (1, 1)), start_dim=1)
         middle_feat = torch.flatten(F.adaptive_max_pool2d(middle_feat, (1, 1)), start_dim=1)
