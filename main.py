@@ -110,8 +110,6 @@ if __name__ == '__main__':
             param.requires_grad = False if epoch <= warmup else True
         for param in model.block_4.parameters():
             param.requires_grad = False if epoch <= warmup else True
-        for param in model.block_5.parameters():
-            param.requires_grad = False if epoch <= warmup else True
 
         train_loss = train(model, train_loader, optimizer)
         results['train_loss'].append(train_loss)

@@ -20,8 +20,9 @@ class SimAM(nn.Module):
 class EnergyAttention(nn.Module):
     def __init__(self, base_dim, reduction=16):
         super(EnergyAttention, self).__init__()
-        self.conv = nn.Conv2d(base_dim, base_dim // reduction, kernel_size=1)
-        self.rev = nn.Conv2d(base_dim // reduction + 1, base_dim, kernel_size=1)
+        middle_dim = max(base_dim // reduction, 16)
+        self.conv = nn.Conv2d(base_dim, middle_dim, kernel_size=1)
+        self.rev = nn.Conv2d(middle_dim + 1, base_dim, kernel_size=1)
         self.gate = SimAM()
 
     def forward(self, feat, domain):
@@ -41,23 +42,21 @@ class Model(nn.Module):
         backbone = list(timm.create_model('resnet50' if backbone_type == 'resnet50' else 'vgg16_bn',
                                           features_only=True, pretrained=True).children())
         if backbone_type == 'resnet50':
-            indexes, dims = [3, 5, 6, 7, 8], [64, 256, 512, 1024, 2048]
+            indexes, dims = [5, 6, 7, 8], [256, 512, 1024, 2048]
         else:
-            indexes, dims = [6, 13, 23, 33, 43], [64, 128, 256, 512, 512]
+            indexes, dims = [13, 23, 33, 43], [128, 256, 512, 512]
 
         # feat
         self.block_1 = nn.Sequential(*backbone[:indexes[0]])
         self.block_2 = nn.Sequential(*backbone[indexes[0]:indexes[1]])
         self.block_3 = nn.Sequential(*backbone[indexes[1]:indexes[2]])
         self.block_4 = nn.Sequential(*backbone[indexes[2]:indexes[3]])
-        self.block_5 = nn.Sequential(*backbone[indexes[3]:indexes[4]])
 
         # atte
         self.energy_1 = EnergyAttention(dims[0])
         self.energy_2 = EnergyAttention(dims[1])
         self.energy_3 = EnergyAttention(dims[2])
         self.energy_4 = EnergyAttention(dims[3])
-        self.energy_5 = EnergyAttention(dims[4])
 
         # proj
         self.proj = nn.Linear(2048 if backbone_type == 'resnet50' else 512, proj_dim)
@@ -71,9 +70,7 @@ class Model(nn.Module):
         block_3_atte, block_3_feat = self.energy_3(block_3_feat, domain)
         block_4_feat = self.block_4(block_3_feat)
         block_4_atte, block_4_feat = self.energy_4(block_4_feat, domain)
-        block_5_feat = self.block_5(block_4_feat)
-        block_5_atte, block_5_feat = self.energy_5(block_5_feat, domain)
 
-        feat = torch.flatten(F.adaptive_max_pool2d(block_5_feat, (1, 1)), start_dim=1)
+        feat = torch.flatten(F.adaptive_max_pool2d(block_4_feat, (1, 1)), start_dim=1)
         proj = self.proj(feat)
         return F.normalize(proj, dim=-1)
