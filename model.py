@@ -9,27 +9,12 @@ class SimAM(nn.Module):
         super(SimAM, self).__init__()
         self.eps = eps
 
-    def forward(self, x):
-        b, c, h, w = x.size()
+    def forward(self, feat):
+        b, c, h, w = feat.size()
         n = h * w
-        d = (x - x.mean(dim=[2, 3], keepdim=True)).pow(2)
-        y = d / (4 * (d.sum(dim=[2, 3], keepdim=True) / n + self.eps)) + 0.5
-        return torch.sigmoid(y)
-
-
-class EnergyAttention(nn.Module):
-    def __init__(self, base_dim, reduction=16):
-        super(EnergyAttention, self).__init__()
-        self.conv = nn.Conv2d(base_dim, base_dim // reduction, kernel_size=1)
-        self.rev = nn.Conv2d(base_dim // reduction + 1, base_dim, kernel_size=1)
-        self.gate = SimAM()
-
-    def forward(self, feat, domain):
-        tra = self.conv(feat)
-        domain = domain.view(-1, 1, 1, 1).float().expand(-1, 1, *tra.size()[-2:])
-        tra = torch.cat((tra, domain), dim=1)
-        rev = self.rev(tra)
-        atte = self.gate(rev)
+        d = (feat - feat.mean(dim=[2, 3], keepdim=True)).pow(2)
+        atte = d / (4 * (d.sum(dim=[2, 3], keepdim=True) / n + self.eps)) + 0.5
+        atte = torch.sigmoid(atte)
         feat = atte * feat
         return atte, feat
 
@@ -37,28 +22,32 @@ class EnergyAttention(nn.Module):
 class Model(nn.Module):
     def __init__(self, backbone_type, proj_dim):
         super(Model, self).__init__()
-        # encoder
-        self.backbone = timm.create_model('resnet50' if backbone_type == 'resnet50' else 'vgg16_bn',
-                                          features_only=True, out_indices=(2, 3, 4), pretrained=True)
-        # atte and proj
-        if backbone_type == 'resnet50':
-            low_dim, middle_dim, high_dim = 512, 1024, 2048
-        else:
-            low_dim, middle_dim, high_dim = 256, 512, 512
-        self.low_atte = EnergyAttention(low_dim)
-        self.middle_atte = EnergyAttention(middle_dim)
-        self.high_atte = EnergyAttention(high_dim)
-        self.proj = nn.Linear(low_dim + middle_dim + high_dim, proj_dim)
+        # backbone
+        backbone = list(timm.create_model('resnet50' if backbone_type == 'resnet50' else 'vgg16_bn',
+                                          features_only=True, pretrained=True).children())
+        indexes = [6, 7, 8] if backbone_type == 'resnet50' else [23, 33, 43]
 
-    def forward(self, img, domain):
-        low_feat, middle_feat, high_feat = self.backbone(img)
-        low_atte, low_feat = self.low_atte(low_feat, domain)
-        middle_atte, middle_feat = self.middle_atte(middle_feat, domain)
-        high_atte, high_feat = self.high_atte(high_feat, domain)
+        # feat
+        self.block_1 = nn.Sequential(*backbone[:indexes[0]])
+        self.block_2 = nn.Sequential(*backbone[indexes[0]:indexes[1]])
+        self.block_3 = nn.Sequential(*backbone[indexes[1]:indexes[2]])
 
-        low_feat = torch.flatten(F.adaptive_max_pool2d(low_feat, (1, 1)), start_dim=1)
-        middle_feat = torch.flatten(F.adaptive_max_pool2d(middle_feat, (1, 1)), start_dim=1)
-        high_feat = torch.flatten(F.adaptive_max_pool2d(high_feat, (1, 1)), start_dim=1)
-        feat = torch.cat((low_feat, middle_feat, high_feat), dim=-1)
+        # atte
+        self.energy_1 = SimAM()
+        self.energy_2 = SimAM()
+        self.energy_3 = SimAM()
+
+        # proj
+        self.proj = nn.Linear(2048 if backbone_type == 'resnet50' else 512, proj_dim)
+
+    def forward(self, img):
+        block_1_feat = self.block_1(img)
+        block_1_atte, block_1_feat = self.energy_1(block_1_feat)
+        block_2_feat = self.block_2(block_1_feat)
+        block_2_atte, block_2_feat = self.energy_2(block_2_feat)
+        block_3_feat = self.block_3(block_2_feat)
+        block_3_atte, block_3_feat = self.energy_3(block_3_feat)
+
+        feat = torch.flatten(F.adaptive_max_pool2d(block_3_feat, (1, 1)), start_dim=1)
         proj = self.proj(feat)
         return F.normalize(proj, dim=-1)

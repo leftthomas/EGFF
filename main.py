@@ -27,7 +27,7 @@ def train(net, data_loader, train_optimizer):
     net.train()
     total_loss, total_num, train_bar = 0.0, 0, tqdm(data_loader, dynamic_ncols=True)
     for img, domain, label, img_name in train_bar:
-        proj = net(img.cuda(), domain.cuda())
+        proj = net(img.cuda())
         loss = loss_criterion(proj, label.cuda())
         train_optimizer.zero_grad()
         loss.backward()
@@ -45,7 +45,7 @@ def val(net, data_loader):
     vectors, domains, labels = [], [], []
     with torch.no_grad():
         for img, domain, label, img_name in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
-            vectors.append(net(img.cuda(), domain.cuda()).cpu())
+            vectors.append(net(img.cuda()).cpu())
             domains.append(domain)
             labels.append(label)
         vectors = torch.cat(vectors, dim=0)
@@ -102,7 +102,11 @@ if __name__ == '__main__':
     for epoch in range(1, epochs + 1):
 
         # warmup, not update the parameters of backbone
-        for param in model.backbone.parameters():
+        for param in model.block_1.parameters():
+            param.requires_grad = False if epoch <= warmup else True
+        for param in model.block_2.parameters():
+            param.requires_grad = False if epoch <= warmup else True
+        for param in model.block_3.parameters():
             param.requires_grad = False if epoch <= warmup else True
 
         train_loss = train(model, train_loader, optimizer)
