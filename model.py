@@ -52,7 +52,11 @@ class Model(nn.Module):
         block_2_atte, block_2_feat = self.energy_2(block_2_feat, block_3_feat)
         block_3_atte, block_3_feat = self.energy_3(block_3_feat, block_4_feat)
 
+        block_1_feat = torch.flatten(F.adaptive_max_pool2d(block_1_feat, (1, 1)), start_dim=1)
+        block_2_feat = torch.flatten(F.adaptive_max_pool2d(block_2_feat, (1, 1)), start_dim=1)
+        block_3_feat = torch.flatten(F.adaptive_max_pool2d(block_3_feat, (1, 1)), start_dim=1)
+        block_4_feat = torch.flatten(F.adaptive_max_pool2d(block_4_feat, (1, 1)), start_dim=1)
+
         feat = torch.cat((block_1_feat, block_2_feat, block_3_feat, block_4_feat), dim=-1)
-        feat = torch.flatten(F.adaptive_max_pool2d(feat, (1, 1)), start_dim=1)
         proj = self.proj(feat)
         return F.normalize(proj, dim=-1)
