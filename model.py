@@ -21,10 +21,12 @@ class EnergyAttention(nn.Module):
     def __init__(self, low_dim, high_dim):
         super(EnergyAttention, self).__init__()
         self.conv = nn.Conv2d(high_dim, low_dim, kernel_size=3, padding=1)
+        self.atte = SimAM()
 
     def forward(self, low_feat, high_feat):
         high_feat = self.conv(high_feat)
         atte = F.interpolate(high_feat, low_feat.size()[-2:], mode='bilinear')
+        atte = self.atte(atte)
         low_feat = atte * low_feat
         return atte, low_feat
 
