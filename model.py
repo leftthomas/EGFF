@@ -24,9 +24,8 @@ class EnergyAttention(nn.Module):
         self.atte = SimAM()
 
     def forward(self, low_feat, high_feat):
-        high_feat = self.conv(high_feat)
-        atte = F.interpolate(high_feat, low_feat.size()[-2:], mode='bilinear')
-        atte = self.atte(atte)
+        high_feat = F.interpolate(self.conv(high_feat), low_feat.size()[-2:], mode='bilinear')
+        atte = self.atte(torch.relu(low_feat + high_feat))
         low_feat = atte * low_feat
         return atte, low_feat
 
