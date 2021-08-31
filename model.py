@@ -41,8 +41,8 @@ class Model(nn.Module):
         dims = [256, 512, 1024, 2048] if backbone_type == 'resnet50' else [128, 256, 512, 512]
 
         # atte
-        self.energy_1 = EnergyAttention(dims[0], dims[1])
-        self.energy_2 = EnergyAttention(dims[1], dims[2])
+        self.energy_1 = EnergyAttention(dims[0], dims[3])
+        self.energy_2 = EnergyAttention(dims[1], dims[3])
         self.energy_3 = EnergyAttention(dims[2], dims[3])
 
         # proj
@@ -50,8 +50,8 @@ class Model(nn.Module):
 
     def forward(self, img):
         block_1_feat, block_2_feat, block_3_feat, block_4_feat = self.backbone(img)
-        block_1_atte, block_1_feat = self.energy_1(block_1_feat, block_2_feat)
-        block_2_atte, block_2_feat = self.energy_2(block_2_feat, block_3_feat)
+        block_1_atte, block_1_feat = self.energy_1(block_1_feat, block_4_feat)
+        block_2_atte, block_2_feat = self.energy_2(block_2_feat, block_4_feat)
         block_3_atte, block_3_feat = self.energy_3(block_3_feat, block_4_feat)
 
         block_1_feat = torch.flatten(F.adaptive_max_pool2d(block_1_feat, (1, 1)), start_dim=1)
