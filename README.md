@@ -1,7 +1,7 @@
-# MSEdge
+# EGFF
 
-A PyTorch implementation of MSEdge based on SPL
-paper [Edge is All You Need: Multi-scale Edge Fusion for Zero-shot Sketch-based Image Retrieval]().
+A PyTorch implementation of EGFF based on ICASSP 2022 paper
+[Energy Guided Feature Fusion for Zero-Shot Sketch-Based Image Retrieval]().
 
 ![Network Architecture](result/structure.png)
 
@@ -74,17 +74,17 @@ optional arguments:
 
 ## Benchmarks
 
-The models are trained on one NVIDIA GTX TITAN (12G) GPU. `Adam` is used to optimize the model, `lr` is `1e-5`
+The models are trained on one NVIDIA GTX TITAN (12G) GPU. `AdamW` is used to optimize the model, `lr` is `1e-5`
 and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
 
 <table>
 <thead>
   <tr>
-    <th rowspan="2">Backbone</th>
-    <th rowspan="2">Dim</th>
+    <th rowspan="3">Backbone</th>
+    <th rowspan="3">Dim</th>
     <th colspan="4">Sketchy Extended</th>
-    <th colspan="4">TU Berlin</th>
-    <th rowspan="2">Download</th>
+    <th colspan="4">TU Berlin Extended</th>
+    <th rowspan="3">Download</th>
   </tr>
   <tr>
     <td align="center">mAP@200</td>
@@ -125,6 +125,19 @@ and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
     <td align="center"><a href="https://pan.baidu.com/s/1yZhkba1EU79LwqgizDzTUA">agdw</a></td>
   </tr>
   <tr>
+    <td align="center">VGG16</td>
+    <td align="center">4096</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.6</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.7</td>
+    <td align="center"><a href="https://pan.baidu.com/s/1yZhkba1EU79LwqgizDzTUA">agdw</a></td>
+  </tr>
+  <tr>
     <td align="center">ResNet50</td>
     <td align="center">128</td>
     <td align="center">29.3</td>
@@ -140,14 +153,27 @@ and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
   <tr>
     <td align="center">ResNet50</td>
     <td align="center">512</td>
-    <td align="center"><b>69.3</b></td>
-    <td align="center"><b>73.3</b></td>
-    <td align="center"><b>81.3</b></td>
-    <td align="center"><b>88.0</b></td>
-    <td align="center"><b>69.3</b></td>
-    <td align="center"><b>73.3</b></td>
-    <td align="center"><b>81.3</b></td>
-    <td align="center"><b>88.0</b></td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.6</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.7</td>
+    <td align="center"><a href="https://pan.baidu.com/s/139IHtS2_tOZcEK2Qgt-yQw">5dzs</a></td>
+  </tr>
+  <tr>
+    <td align="center">ResNet50</td>
+    <td align="center">2048</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.6</td>
+    <td align="center">29.3</td>
+    <td align="center">33.3</td>
+    <td align="center">45.3</td>
+    <td align="center">58.7</td>
     <td align="center"><a href="https://pan.baidu.com/s/139IHtS2_tOZcEK2Qgt-yQw">5dzs</a></td>
   </tr>
 </tbody>
@@ -155,10 +181,4 @@ and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
 
 ## Results
 
-### Sketchy Extended
-
-![synthia](result/sketchy.png)
-
-### TU Berlin
-
-![cityscapes](result/tuberlin.png)
+![vis](result/vis.png)
