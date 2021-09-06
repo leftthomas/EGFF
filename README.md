@@ -35,7 +35,7 @@ pip install timm
 ## Dataset
 
 [Sketchy Extended](http://sketchy.eye.gatech.edu) and
-[TU Berlin Extended](http://cybertron.cg.tu-berlin.de/eitz/projects/classifysketch/) datasets are used in this repo, you
+[TU-Berlin Extended](http://cybertron.cg.tu-berlin.de/eitz/projects/classifysketch/) datasets are used in this repo, you
 could download these datasets from official websites, or download them from
 [MEGA](https://mega.nz/folder/IooQkZRJ#jLYcZ5PFK9jzxLN4FuOopg). The data directory structure is shown as follows:
 
@@ -97,7 +97,7 @@ and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
     <th rowspan="3">Backbone</th>
     <th rowspan="3">Dim</th>
     <th colspan="4">Sketchy Extended</th>
-    <th colspan="4">TU Berlin Extended</th>
+    <th colspan="4">TU-Berlin Extended</th>
     <th rowspan="3">Download</th>
   </tr>
   <tr>
