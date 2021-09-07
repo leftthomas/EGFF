@@ -10,7 +10,7 @@ from utils import DomainDataset
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test Model')
     parser.add_argument('--data_root', default='/data', type=str, help='Datasets root path')
-    parser.add_argument('--query_name', default='/data/sketchy/val/sketch/cow/n01887787_1-3.jpg', type=str,
+    parser.add_argument('--query_name', default='/data/sketchy/val/sketch/cow/n01887787_591-14.jpg', type=str,
                         help='Query image name')
     parser.add_argument('--data_base', default='result/sketchy_resnet50_2048_vectors.pth', type=str,
                         help='Queried database')

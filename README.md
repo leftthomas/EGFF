@@ -62,7 +62,7 @@ could download these datasets from official websites, or download them from
 ### Train Model
 
 ```
-python main.py --data_name tuberlin
+python train.py --data_name tuberlin
 optional arguments:
 --data_root                   Datasets root path [default value is '/data']
 --data_name                   Dataset name [default value is 'sketchy'](choices=['sketchy', 'tuberlin'])
@@ -77,10 +77,10 @@ optional arguments:
 ### Test Model
 
 ```
-python retrieval.py --num 8
+python test.py --num 8
 optional arguments:
 --data_root                   Datasets root path [default value is '/data']
---query_name                  Query image name [default value is '/data/sketchy/val/sketch/cow/n01887787_1-3.jpg']
+--query_name                  Query image name [default value is '/data/sketchy/val/sketch/cow/n01887787_591-14.jpg']
 --data_base                   Queried database [default value is 'result/sketchy_resnet50_2048_vectors.pth']
 --num                         Retrieval number [default value is 4]
 --save_root                   Result saved root path [default value is 'result']
