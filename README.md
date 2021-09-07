@@ -144,10 +144,10 @@ and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
   <tr>
     <td align="center">VGG16</td>
     <td align="center">512</td>
-    <td align="center">61.8</td>
-    <td align="center">45.2</td>
-    <td align="center">58.9</td>
-    <td align="center">53.9</td>
+    <td align="center">61.6</td>
+    <td align="center">45.1</td>
+    <td align="center">58.8</td>
+    <td align="center">53.7</td>
     <td align="center">62.6</td>
     <td align="center">41.9</td>
     <td align="center">60.3</td>
