@@ -27,7 +27,7 @@ def train(net, data_loader, train_optimizer):
     net.train()
     total_loss, total_num, train_bar = 0.0, 0, tqdm(data_loader, dynamic_ncols=True)
     for img, domain, label, img_name in train_bar:
-        proj = net(img.cuda())
+        _, _, _, proj = net(img.cuda())
         loss = loss_criterion(proj, label.cuda())
         train_optimizer.zero_grad()
         loss.backward()
@@ -45,7 +45,8 @@ def val(net, data_loader):
     vectors, domains, labels = [], [], []
     with torch.no_grad():
         for img, domain, label, img_name in tqdm(data_loader, desc='Feature extracting', dynamic_ncols=True):
-            vectors.append(net(img.cuda()).cpu())
+            _, _, _, proj = net(img.cuda())
+            vectors.append(proj.cpu())
             domains.append(domain)
             labels.append(label)
         vectors = torch.cat(vectors, dim=0)

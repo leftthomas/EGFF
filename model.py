@@ -48,8 +48,10 @@ class Model(nn.Module):
 
     def forward(self, img):
         block_1_feat, block_2_feat, block_3_feat = self.backbone(img)
+
         block_1_atte, block_1_feat = self.energy_1(block_1_feat, block_3_feat)
         block_2_atte, block_2_feat = self.energy_2(block_2_feat, block_3_feat)
+        block_3_atte = torch.sigmoid(block_3_feat)
 
         block_1_feat = torch.flatten(F.adaptive_max_pool2d(block_1_feat, (1, 1)), start_dim=1)
         block_2_feat = torch.flatten(F.adaptive_max_pool2d(block_2_feat, (1, 1)), start_dim=1)
@@ -57,4 +59,4 @@ class Model(nn.Module):
 
         feat = torch.cat((block_1_feat, block_2_feat, block_3_feat), dim=-1)
         proj = self.proj(feat)
-        return F.normalize(proj, dim=-1)
+        return block_1_atte, block_2_atte, block_3_atte, F.normalize(proj, dim=-1)
