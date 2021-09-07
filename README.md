@@ -32,6 +32,12 @@ conda install -c pytorch faiss-cpu
 pip install timm
 ```
 
+- [Opencv](https://opencv.org)
+
+```
+pip install opencv-python
+```
+
 ## Dataset
 
 [Sketchy Extended](http://sketchy.eye.gatech.edu) and
@@ -83,6 +89,16 @@ optional arguments:
 --query_name                  Query image name [default value is '/data/sketchy/val/sketch/cow/n01887787_591-14.jpg']
 --data_base                   Queried database [default value is 'result/sketchy_resnet50_2048_vectors.pth']
 --num                         Retrieval number [default value is 4]
+--save_root                   Result saved root path [default value is 'result']
+```
+
+### Vis Model
+
+```
+python vis.py --model_name result/sketchy_resnet50_2048_model.pth
+optional arguments:
+--vis_name                    Visual image name [default value is '/data/sketchy/val/sketch/cow/n01887787_591-14.jpg']
+--model_name                  Model name [default value is 'result/sketchy_resnet50_512_model.pth']
 --save_root                   Result saved root path [default value is 'result']
 ```
 
@@ -167,10 +183,10 @@ and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
   <tr>
     <td align="center">ResNet50</td>
     <td align="center">512</td>
-    <td align="center">68.3</td>
+    <td align="center">68.4</td>
     <td align="center">54.8</td>
-    <td align="center">65.9</td>
-    <td align="center">61.7</td>
+    <td align="center">66.0</td>
+    <td align="center">61.8</td>
     <td align="center">69.0</td>
     <td align="center">53.5</td>
     <td align="center">67.5</td>
