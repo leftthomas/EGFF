@@ -43,7 +43,7 @@ pip install opencv-python
 [Sketchy Extended](http://sketchy.eye.gatech.edu) and
 [TU-Berlin Extended](http://cybertron.cg.tu-berlin.de/eitz/projects/classifysketch/) datasets are used in this repo, you
 could download these datasets from official websites, or download them from
-[MEGA](https://mega.nz/folder/IooQkZRJ#jLYcZ5PFK9jzxLN4FuOopg). The data directory structure is shown as follows:
+[Google Drive](https://drive.google.com/drive/folders/1lce41k7cGNUOwzt-eswCeahDLWG6Cdk0?usp=sharing). The data directory structure is shown as follows:
 
  ```
 ├──sketchy
