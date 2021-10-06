@@ -1,7 +1,7 @@
 # EGFF
 
 A PyTorch implementation of EGFF based on ICASSP 2022 paper
-[Energy Guided Feature Fusion for Zero-Shot Sketch-Based Image Retrieval]().
+[Energy-Guided Feature Fusion for Zero-Shot Sketch-Based Image Retrieval]().
 
 ![Network Architecture](result/structure.png)
 
