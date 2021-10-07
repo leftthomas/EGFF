@@ -32,7 +32,7 @@ conda install -c pytorch faiss-cpu
 pip install timm
 ```
 
-- [Opencv](https://opencv.org)
+- [OpenCV](https://opencv.org)
 
 ```
 pip install opencv-python
