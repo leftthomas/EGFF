@@ -66,7 +66,7 @@ def val(net, data_loader):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Model')
     # common args
-    parser.add_argument('--data_root', default='/data', type=str, help='Datasets root path')
+    parser.add_argument('--data_root', default='/home/data', type=str, help='Datasets root path')
     parser.add_argument('--data_name', default='sketchy', type=str, choices=['sketchy', 'tuberlin'],
                         help='Dataset name')
     parser.add_argument('--backbone_type', default='resnet50', type=str, choices=['resnet50', 'vgg16'],

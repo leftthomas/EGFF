@@ -64,7 +64,7 @@ could download these datasets from official websites, or download them from
 ```
 python train.py --data_name tuberlin
 optional arguments:
---data_root                   Datasets root path [default value is '/data']
+--data_root                   Datasets root path [default value is '/home/data']
 --data_name                   Dataset name [default value is 'sketchy'](choices=['sketchy', 'tuberlin'])
 --backbone_type               Backbone type [default value is 'resnet50'](choices=['resnet50', 'vgg16'])
 --proj_dim                    Projected embedding dim [default value is 512]
@@ -79,8 +79,8 @@ optional arguments:
 ```
 python test.py --num 8
 optional arguments:
---data_root                   Datasets root path [default value is '/data']
---query_name                  Query image name [default value is '/data/sketchy/val/sketch/cow/n01887787_591-14.jpg']
+--data_root                   Datasets root path [default value is '/home/data']
+--query_name                  Query image name [default value is '/home/data/sketchy/val/sketch/cow/n01887787_591-14.jpg']
 --data_base                   Queried database [default value is 'result/sketchy_resnet50_2048_vectors.pth']
 --num                         Retrieval number [default value is 4]
 --save_root                   Result saved root path [default value is 'result']
@@ -91,7 +91,7 @@ optional arguments:
 ```
 python vis.py --model_name result/sketchy_resnet50_2048_model.pth
 optional arguments:
---vis_name                    Visual image name [default value is '/data/sketchy/val/photo/helicopter/ext_4.jpg']
+--vis_name                    Visual image name [default value is '/home/data/sketchy/val/photo/helicopter/ext_4.jpg']
 --model_name                  Model name [default value is 'result/sketchy_resnet50_512_model.pth']
 --save_root                   Result saved root path [default value is 'result']
 ```
