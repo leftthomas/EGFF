@@ -1,6 +1,6 @@
 # EGFF
 
-A PyTorch implementation of EGFF based on ICASSP 2022 paper
+A PyTorch implementation of EGFF based on the paper
 [Energy-Guided Feature Fusion for Zero-Shot Sketch-Based Image Retrieval]().
 
 ![Network Architecture](result/structure.png)
@@ -11,19 +11,13 @@ A PyTorch implementation of EGFF based on ICASSP 2022 paper
 - [PyTorch](https://pytorch.org)
 
 ```
-conda install pytorch=1.9.0 torchvision cudatoolkit -c pytorch
+conda install pytorch=1.10.1 torchvision cudatoolkit -c pytorch
 ```
 
 - [Pytorch Metric Learning](https://kevinmusgrave.github.io/pytorch-metric-learning/)
 
 ```
 pip install pytorch-metric-learning
-```
-
-- [Faiss](https://faiss.ai)
-
-```
-conda install -c pytorch faiss-cpu
 ```
 
 - [Timm](https://rwightman.github.io/pytorch-image-models/)
@@ -74,7 +68,7 @@ optional arguments:
 --data_name                   Dataset name [default value is 'sketchy'](choices=['sketchy', 'tuberlin'])
 --backbone_type               Backbone type [default value is 'resnet50'](choices=['resnet50', 'vgg16'])
 --proj_dim                    Projected embedding dim [default value is 512]
---batch_size                  Number of images in each mini-batch [default value is 48]
+--batch_size                  Number of images in each mini-batch [default value is 64]
 --epochs                      Number of epochs over the model to train [default value is 10]
 --warmup                      Number of warmups over the model to train [default value is 1]
 --save_root                   Result saved root path [default value is 'result']
