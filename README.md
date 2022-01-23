@@ -98,7 +98,7 @@ optional arguments:
 
 ## Benchmarks
 
-The models are trained on one NVIDIA GTX TITAN (12G) GPU. `AdamW` is used to optimize the model, `lr` is `1e-5`
+The models are trained on one NVIDIA GeForce RTX 3090 (24G) GPU. `AdamW` is used to optimize the model, `lr` is `1e-5`
 and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
 
 <table>
