@@ -77,12 +77,12 @@ optional arguments:
 ### Test Model
 
 ```
-python test.py --num 8
+python test.py --num 4
 optional arguments:
 --data_root                   Datasets root path [default value is '/home/data']
 --query_name                  Query image name [default value is '/home/data/sketchy/val/sketch/cow/n01887787_591-14.jpg']
---data_base                   Queried database [default value is 'result/sketchy_resnet50_2048_vectors.pth']
---num                         Retrieval number [default value is 4]
+--data_base                   Queried database [default value is 'result/sketchy_resnet50_512_vectors.pth']
+--num                         Retrieval number [default value is 8]
 --save_root                   Result saved root path [default value is 'result']
 ```
 
@@ -125,79 +125,79 @@ and `weight decay` is `5e-4`. all the hyper-parameters are the default values.
   <tr>
     <td align="center">VGG16</td>
     <td align="center">64</td>
-    <td align="center">55.8</td>
+    <td align="center">36.1</td>
+    <td align="center">39.8</td>
+    <td align="center">52.8</td>
+    <td align="center">48.1</td>
+    <td align="center">44.2</td>
     <td align="center">39.3</td>
-    <td align="center">52.9</td>
-    <td align="center">48.2</td>
-    <td align="center">59.3</td>
-    <td align="center">38.8</td>
-    <td align="center">57.2</td>
+    <td align="center">57.1</td>
     <td align="center">53.9</td>
     <td align="center"><a href="https://pan.baidu.com/s/1uGw9MdDVGHYchJ4fXUjIhg">u7qg</a></td>
   </tr>
   <tr>
     <td align="center">VGG16</td>
     <td align="center">512</td>
-    <td align="center">61.6</td>
+    <td align="center">42.7</td>
     <td align="center">45.1</td>
-    <td align="center">58.8</td>
-    <td align="center">53.7</td>
-    <td align="center">62.6</td>
-    <td align="center">41.9</td>
-    <td align="center">60.3</td>
-    <td align="center">56.7</td>
+    <td align="center">58.9</td>
+    <td align="center">53.6</td>
+    <td align="center">48.6</td>
+    <td align="center">42.8</td>
+    <td align="center">60.7</td>
+    <td align="center">57.2</td>
     <td align="center"><a href="https://pan.baidu.com/s/1431mOh9jAmXPzKq-o6YYJg">6up4</a></td>
   </tr>
   <tr>
     <td align="center">VGG16</td>
     <td align="center">4096</td>
-    <td align="center">63.1</td>
-    <td align="center">46.6</td>
-    <td align="center">60.3</td>
-    <td align="center">55.1</td>
-    <td align="center">63.6</td>
-    <td align="center">43.5</td>
-    <td align="center">61.4</td>
-    <td align="center">58.2</td>
+    <td align="center">44.6</td>
+    <td align="center">47.3</td>
+    <td align="center">60.1</td>
+    <td align="center">55.2</td>
+    <td align="center">50.0</td>
+    <td align="center">44.1</td>
+    <td align="center">61.8</td>
+    <td align="center">58.5</td>
     <td align="center"><a href="https://pan.baidu.com/s/1BJMT_nL7YpTkNpKKaHljYQ">hznm</a></td>
   </tr>
   <tr>
     <td align="center">ResNet50</td>
-    <td align="center">128</td>
-    <td align="center">64.3</td>
-    <td align="center">49.8</td>
-    <td align="center">61.9</td>
-    <td align="center">57.8</td>
-    <td align="center">66.0</td>
-    <td align="center">49.4</td>
-    <td align="center">64.4</td>
-    <td align="center">61.8</td>
+    <td align="center">64</td>
+    <td align="center">43.3</td>
+    <td align="center">46.6</td>
+    <td align="center">58.6</td>
+    <td align="center">54.3</td>
+    <td align="center">50.7</td>
+    <td align="center">47.7</td>
+    <td align="center">61.1</td>
+    <td align="center">58.5</td>
     <td align="center"><a href="https://pan.baidu.com/s/1xRgFfI74zfH8rX12DcOwEQ">uhkp</a></td>
   </tr>
   <tr>
     <td align="center">ResNet50</td>
     <td align="center">512</td>
-    <td align="center">68.4</td>
-    <td align="center">54.8</td>
+    <td align="center">52.6</td>
+    <td align="center">55.4</td>
     <td align="center">66.0</td>
-    <td align="center">61.8</td>
-    <td align="center">69.0</td>
+    <td align="center">61.7</td>
+    <td align="center">58.0</td>
     <td align="center">53.5</td>
     <td align="center">67.5</td>
-    <td align="center">65.3</td>
+    <td align="center">65.0</td>
     <td align="center"><a href="https://pan.baidu.com/s/1hkez_L-YtGJss9ngkmvbTg">u8ct</a></td>
   </tr>
   <tr>
     <td align="center">ResNet50</td>
     <td align="center">2048</td>
-    <td align="center">69.0</td>
-    <td align="center">55.9</td>
-    <td align="center">66.7</td>
+    <td align="center">53.7</td>
+    <td align="center">56.8</td>
+    <td align="center">66.4</td>
     <td align="center">62.5</td>
-    <td align="center">70.4</td>
-    <td align="center">55.0</td>
-    <td align="center">69.0</td>
-    <td align="center">66.6</td>
+    <td align="center">60.4</td>
+    <td align="center">56.1</td>
+    <td align="center">69.4</td>
+    <td align="center">67.1</td>
     <td align="center"><a href="https://pan.baidu.com/s/1uMsoU2A31MFnfMZmBsL0Xw">ipr3</a></td>
   </tr>
 </tbody>
