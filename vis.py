@@ -12,7 +12,7 @@ from utils import get_transform
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Vis Model')
-    parser.add_argument('--vis_name', default='/home/data/sketchy/val/photo/helicopter/ext_4.jpg', type=str,
+    parser.add_argument('--vis_name', default='/home/data/sketchy/val/photo/helicopter/ext_5.jpg', type=str,
                         help='Visual image name')
     parser.add_argument('--model_name', default='result/sketchy_resnet50_512_model.pth', type=str,
                         help='Model name')
